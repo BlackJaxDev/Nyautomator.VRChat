@@ -1,0 +1,1881 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>VRChat Dolly</title>
+  <style>
+    :root {
+      color-scheme: dark;
+      --surface: #11151d;
+      --surface-soft: #171d27;
+      --button-bg: #0d1118;
+      --border: #293241;
+      --border-strong: #37445a;
+      --text: #eef2f7;
+      --subtext: #aab3c2;
+      --muted: #7f8a9d;
+      --accent: #6bbcff;
+      --accent-weak: #b7dbff;
+      --success: #3ddc84;
+      --warning: #f4b544;
+      --danger: #ff7777;
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      background: transparent;
+      color: var(--text);
+    }
+
+    * { box-sizing: border-box; }
+
+    html,
+    body {
+      margin: 0;
+      min-width: 0;
+      background: transparent;
+    }
+
+    body {
+      overflow: auto;
+      font-size: 15px;
+      line-height: 1.4;
+      scrollbar-width: thin;
+      scrollbar-color: var(--accent) transparent;
+    }
+
+    body::-webkit-scrollbar,
+    .dolly-track-list__items::-webkit-scrollbar,
+    .dolly-keyframe-list::-webkit-scrollbar,
+    .dolly-playback-list::-webkit-scrollbar,
+    .dolly-event-list::-webkit-scrollbar {
+      width: 8px;
+      height: 8px;
+    }
+
+    body::-webkit-scrollbar-track,
+    .dolly-track-list__items::-webkit-scrollbar-track,
+    .dolly-keyframe-list::-webkit-scrollbar-track,
+    .dolly-playback-list::-webkit-scrollbar-track,
+    .dolly-event-list::-webkit-scrollbar-track {
+      background: transparent;
+    }
+
+    body::-webkit-scrollbar-thumb,
+    .dolly-track-list__items::-webkit-scrollbar-thumb,
+    .dolly-keyframe-list::-webkit-scrollbar-thumb,
+    .dolly-playback-list::-webkit-scrollbar-thumb,
+    .dolly-event-list::-webkit-scrollbar-thumb {
+      background: color-mix(in srgb, var(--border) 55%, var(--accent) 45%);
+      border-radius: 999px;
+    }
+
+    body,
+    button,
+    input,
+    select {
+      font: inherit;
+    }
+
+    button,
+    input,
+    select {
+      min-width: 0;
+    }
+
+    .vrchat-dolly {
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+      min-height: 0;
+    }
+
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 7px;
+      min-height: 36px;
+      border: 1px solid var(--border-strong);
+      border-radius: 9px;
+      background: var(--button-bg);
+      color: var(--text);
+      padding: 7px 12px;
+      font-weight: 750;
+      cursor: pointer;
+      white-space: nowrap;
+      transition: border-color 0.18s ease, background 0.18s ease, transform 0.05s ease;
+    }
+
+    .btn:hover:not(:disabled) {
+      border-color: var(--accent);
+      background: color-mix(in srgb, var(--button-bg) 82%, var(--accent) 18%);
+    }
+
+    .btn:active:not(:disabled) {
+      transform: translateY(1px);
+    }
+
+    .btn.primary {
+      border-color: color-mix(in srgb, var(--accent) 80%, var(--border));
+      background: color-mix(in srgb, var(--accent) 76%, #0c1722 24%);
+      color: #071018;
+    }
+
+    .btn.danger,
+    .btn.danger.outline {
+      border-color: color-mix(in srgb, var(--danger) 62%, var(--border));
+      color: #ffd1d1;
+    }
+
+    .btn.danger:hover:not(:disabled),
+    .btn.danger.outline:hover:not(:disabled) {
+      background: rgba(255, 119, 119, 0.12);
+    }
+
+    .btn:disabled,
+    .input:disabled,
+    .select:disabled {
+      opacity: 0.55;
+      cursor: not-allowed;
+    }
+
+    .input,
+    .select {
+      width: 100%;
+      border: 1px solid var(--border-strong);
+      border-radius: 9px;
+      background: var(--button-bg);
+      color: var(--text);
+      padding: 8px 10px;
+      outline: none;
+    }
+
+    .input:focus,
+    .select:focus {
+      border-color: var(--accent);
+      box-shadow: 0 0 0 3px rgba(107, 188, 255, 0.13);
+    }
+
+    .dolly-toolbar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+    }
+
+    .dolly-toolbar__title {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      min-width: 0;
+    }
+
+    .dolly-toolbar__icon {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 42px;
+      height: 42px;
+      border-radius: 12px;
+      border: 1px solid var(--border-strong);
+      background: color-mix(in srgb, var(--surface) 84%, var(--accent) 16%);
+      box-shadow: 0 10px 24px rgba(0, 0, 0, 0.18);
+      flex: 0 0 auto;
+    }
+
+    .dolly-toolbar__icon img {
+      width: 24px;
+      height: 24px;
+      object-fit: contain;
+    }
+
+    .dolly-toolbar__title h2 {
+      margin: 0;
+      font-size: 1.2rem;
+      line-height: 1.2;
+      color: var(--text);
+      letter-spacing: 0;
+    }
+
+    .dolly-toolbar__meta {
+      display: flex;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-top: 4px;
+      color: var(--subtext);
+      font-size: 0.82rem;
+    }
+
+    .dolly-unsaved,
+    .dolly-active-track {
+      display: inline-flex;
+      align-items: center;
+      min-height: 22px;
+      padding: 2px 8px;
+      border-radius: 999px;
+      font-size: 0.76rem;
+      font-weight: 700;
+    }
+
+    .dolly-unsaved {
+      border: 1px solid rgba(245, 158, 11, 0.5);
+      background: rgba(245, 158, 11, 0.12);
+      color: #fbbf24;
+    }
+
+    .dolly-active-track {
+      border: 1px solid rgba(34, 197, 94, 0.5);
+      background: rgba(34, 197, 94, 0.12);
+      color: #86efac;
+    }
+
+    .dolly-toolbar__actions,
+    .dolly-button-row {
+      display: flex;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+
+    .dolly-notice {
+      padding: 10px 12px;
+      border-radius: 10px;
+      border: 1px solid var(--border);
+      background: color-mix(in srgb, var(--surface) 90%, rgba(148, 163, 184, 0.12));
+      color: var(--text);
+      font-size: 0.9rem;
+    }
+
+    .dolly-notice--success {
+      border-color: color-mix(in srgb, var(--success) 55%, var(--border));
+      background: rgba(61, 220, 132, 0.12);
+    }
+
+    .dolly-notice--error {
+      border-color: color-mix(in srgb, var(--danger) 55%, var(--border));
+      background: rgba(255, 119, 119, 0.12);
+    }
+
+    .dolly-status-strip {
+      display: flex;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 8px;
+      padding: 10px;
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      background: color-mix(in srgb, var(--surface) 94%, rgba(148, 163, 184, 0.08));
+    }
+
+    .dolly-status-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 7px;
+      min-height: 28px;
+      padding: 4px 10px;
+      border-radius: 999px;
+      border: 1px solid color-mix(in srgb, var(--border) 80%, rgba(148, 163, 184, 0.3));
+      color: var(--subtext);
+      font-size: 0.8rem;
+      white-space: nowrap;
+    }
+
+    .dolly-status-pill__dot {
+      width: 7px;
+      height: 7px;
+      border-radius: 999px;
+      background: #64748b;
+    }
+
+    .dolly-status-pill.is-active {
+      color: var(--text);
+      border-color: color-mix(in srgb, var(--success) 44%, var(--border));
+      background: rgba(61, 220, 132, 0.08);
+    }
+
+    .dolly-status-pill.is-active .dolly-status-pill__dot {
+      background: var(--success);
+      box-shadow: 0 0 0 3px rgba(61, 220, 132, 0.14);
+    }
+
+    .dolly-grid {
+      display: grid;
+      grid-template-columns: minmax(210px, 260px) minmax(0, 1fr) minmax(220px, 260px);
+      gap: 16px;
+      min-height: 0;
+    }
+
+    .dolly-track-list,
+    .dolly-main,
+    .dolly-sidebar {
+      min-width: 0;
+    }
+
+    .dolly-track-list,
+    .dolly-side-section,
+    .dolly-editor-head,
+    .dolly-live,
+    .dolly-control-group,
+    .dolly-timeline,
+    .dolly-keyframe-editor,
+    .dolly-editor-empty {
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      background: color-mix(in srgb, var(--surface) 94%, rgba(148, 163, 184, 0.06));
+    }
+
+    .dolly-track-list {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      padding: 12px;
+      align-self: start;
+    }
+
+    .dolly-track-list__create {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) auto;
+      gap: 8px;
+    }
+
+    .dolly-track-list__items {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      max-height: 62vh;
+      overflow: auto;
+      padding-right: 2px;
+    }
+
+    .dolly-track-item {
+      display: grid;
+      gap: 4px;
+      width: 100%;
+      padding: 10px;
+      border: 1px solid color-mix(in srgb, var(--border) 86%, rgba(148, 163, 184, 0.28));
+      border-radius: 10px;
+      background: var(--button-bg);
+      color: var(--text);
+      cursor: pointer;
+      text-align: left;
+      transition: border-color 0.18s ease, background-color 0.18s ease;
+    }
+
+    .dolly-track-item:hover,
+    .dolly-track-item.is-selected {
+      border-color: color-mix(in srgb, var(--accent) 58%, var(--border));
+      background: color-mix(in srgb, var(--surface) 82%, rgba(107, 188, 255, 0.14));
+    }
+
+    .dolly-track-item__name {
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      font-weight: 650;
+    }
+
+    .dolly-track-item__meta {
+      color: var(--subtext);
+      font-size: 0.78rem;
+    }
+
+    .dolly-main {
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+    }
+
+    .dolly-editor-empty {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      min-height: 320px;
+      color: var(--subtext);
+      text-align: center;
+      padding: 24px;
+    }
+
+    .dolly-editor-head {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      padding: 12px;
+    }
+
+    .dolly-editor-head__fields {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+      gap: 10px;
+      min-width: 0;
+    }
+
+    .dolly-editor-head__actions {
+      display: flex;
+      align-items: center;
+      flex-wrap: wrap;
+      justify-content: flex-end;
+      gap: 8px;
+      padding-top: 4px;
+      border-top: 1px solid color-mix(in srgb, var(--border) 70%, transparent);
+    }
+
+    .dolly-field {
+      display: grid;
+      gap: 5px;
+      min-width: 0;
+    }
+
+    .dolly-field > span {
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      color: var(--subtext);
+      font-size: 0.78rem;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+    }
+
+    .dolly-live {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+      gap: 12px;
+      padding: 12px;
+    }
+
+    .dolly-live__metrics {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+      gap: 10px;
+      align-content: start;
+    }
+
+    .dolly-live__metrics > div {
+      display: grid;
+      gap: 5px;
+      min-width: 0;
+      padding: 10px;
+      border: 1px solid color-mix(in srgb, var(--border) 82%, transparent);
+      border-radius: 10px;
+      background: rgba(148, 163, 184, 0.07);
+    }
+
+    .dolly-live__metrics span {
+      color: var(--subtext);
+      font-size: 0.78rem;
+    }
+
+    .dolly-live__metrics strong {
+      min-width: 0;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      color: var(--text);
+      font-size: 0.9rem;
+    }
+
+    .dolly-path {
+      width: 100%;
+      min-height: 170px;
+      color: var(--accent);
+    }
+
+    .dolly-path rect {
+      fill: color-mix(in srgb, var(--surface) 90%, rgba(15, 23, 42, 0.12));
+      stroke: color-mix(in srgb, var(--border) 88%, transparent);
+    }
+
+    .dolly-path polyline {
+      fill: none;
+      stroke: currentColor;
+      stroke-width: 2.5;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+    }
+
+    .dolly-path circle {
+      fill: var(--surface);
+      stroke: currentColor;
+      stroke-width: 2;
+    }
+
+    .dolly-path g.is-selected circle {
+      fill: #fbbf24;
+      stroke: #f59e0b;
+    }
+
+    .dolly-path text {
+      fill: var(--subtext);
+      font-size: 11px;
+      user-select: none;
+    }
+
+    .dolly-controls {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: 14px;
+    }
+
+    .dolly-control-group,
+    .dolly-timeline,
+    .dolly-keyframe-editor,
+    .dolly-side-section {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      padding: 12px;
+    }
+
+    .dolly-section-title {
+      display: flex;
+      align-items: center;
+      gap: 7px;
+      color: var(--text);
+      font-size: 0.9rem;
+      font-weight: 750;
+    }
+
+    .dolly-control-row {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 10px;
+    }
+
+    .dolly-control-group:nth-child(2) .dolly-control-row:first-of-type {
+      grid-template-columns: repeat(auto-fit, minmax(90px, 1fr));
+    }
+
+    .dolly-toggle-row {
+      display: flex;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 10px;
+    }
+
+    .dolly-trigger-config {
+      display: grid;
+      grid-template-columns: auto minmax(0, 1fr) auto;
+      align-items: end;
+      gap: 10px;
+      padding: 10px;
+      border: 1px solid color-mix(in srgb, var(--border) 86%, transparent);
+      border-radius: 10px;
+      background: rgba(148, 163, 184, 0.06);
+    }
+
+    .dolly-toggle {
+      display: inline-flex;
+      align-items: center;
+      gap: 7px;
+      min-height: 28px;
+      padding: 4px 9px;
+      border: 1px solid var(--border);
+      border-radius: 999px;
+      background: rgba(148, 163, 184, 0.08);
+      cursor: pointer;
+      color: var(--text);
+    }
+
+    .dolly-toggle input {
+      margin: 0;
+      accent-color: var(--accent);
+    }
+
+    .dolly-keyframe-list {
+      display: flex;
+      flex-direction: column;
+      gap: 7px;
+      max-height: 260px;
+      overflow: auto;
+      padding-right: 2px;
+    }
+
+    .dolly-keyframe-row {
+      display: grid;
+      grid-template-columns: 34px minmax(70px, 0.8fr) repeat(3, minmax(60px, 0.8fr)) minmax(90px, 1fr);
+      gap: 8px;
+      align-items: center;
+      width: 100%;
+      padding: 8px 10px;
+      border: 1px solid color-mix(in srgb, var(--border) 86%, transparent);
+      border-radius: 9px;
+      background: var(--button-bg);
+      color: var(--text);
+      cursor: pointer;
+      font-size: 0.82rem;
+      text-align: left;
+    }
+
+    .dolly-keyframe-row:hover,
+    .dolly-keyframe-row.is-selected {
+      border-color: color-mix(in srgb, var(--accent) 56%, var(--border));
+      background: color-mix(in srgb, var(--surface) 84%, rgba(107, 188, 255, 0.12));
+    }
+
+    .dolly-keyframe-row > span {
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .dolly-keyframe-row__index {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 24px;
+      height: 24px;
+      border-radius: 999px;
+      background: rgba(107, 188, 255, 0.12);
+      color: var(--accent);
+      font-weight: 750;
+    }
+
+    .dolly-keyframe-editor__grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+      gap: 10px;
+    }
+
+    .dolly-settings-summary,
+    .dolly-settings-map {
+      display: flex;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+
+    .dolly-settings-summary span,
+    .dolly-settings-map span {
+      display: inline-flex;
+      align-items: center;
+      min-height: 24px;
+      max-width: 100%;
+      padding: 3px 8px;
+      border-radius: 999px;
+      border: 1px solid color-mix(in srgb, var(--border) 82%, rgba(148, 163, 184, 0.25));
+      background: rgba(148, 163, 184, 0.08);
+      color: var(--subtext);
+      font-size: 0.78rem;
+    }
+
+    .dolly-settings-map span {
+      font-family: "JetBrains Mono", "Fira Code", "Cascadia Code", Consolas, monospace;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .dolly-sidebar {
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+    }
+
+    .dolly-playback-list,
+    .dolly-event-list {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      max-height: 34vh;
+      overflow: auto;
+      padding-right: 2px;
+    }
+
+    .dolly-playback-item,
+    .dolly-event {
+      display: grid;
+      gap: 4px;
+      padding: 9px;
+      border: 1px solid color-mix(in srgb, var(--border) 86%, transparent);
+      border-radius: 9px;
+      background: rgba(148, 163, 184, 0.07);
+      color: var(--text);
+    }
+
+    .dolly-playback-item span,
+    .dolly-event span,
+    .dolly-event p {
+      margin: 0;
+      color: var(--subtext);
+      font-size: 0.78rem;
+    }
+
+    .dolly-playback-item strong,
+    .dolly-event strong {
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      font-size: 0.86rem;
+    }
+
+    .dolly-event--playbackFailed {
+      border-color: color-mix(in srgb, var(--danger) 50%, var(--border));
+    }
+
+    .dolly-event--keyframeCaptured,
+    .dolly-event--playbackStarted {
+      border-color: color-mix(in srgb, var(--success) 42%, var(--border));
+    }
+
+    .dolly-empty {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 48px;
+      padding: 10px;
+      border: 1px dashed var(--border);
+      border-radius: 10px;
+      color: var(--subtext);
+      font-size: 0.84rem;
+      text-align: center;
+    }
+
+    @media (max-width: 1450px) {
+      .dolly-grid {
+        grid-template-columns: minmax(210px, 260px) minmax(0, 1fr);
+      }
+
+      .dolly-sidebar {
+        grid-column: 1 / -1;
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
+    }
+
+    @media (max-width: 1100px) {
+      .dolly-grid,
+      .dolly-controls,
+      .dolly-live,
+      .dolly-sidebar,
+      .dolly-editor-head {
+        grid-template-columns: 1fr;
+      }
+
+      .dolly-editor-head__fields,
+      .dolly-live__metrics {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
+
+      .dolly-editor-head__actions {
+        justify-content: flex-start;
+      }
+    }
+
+    @media (max-width: 700px) {
+      .dolly-toolbar {
+        align-items: stretch;
+        flex-direction: column;
+      }
+
+      .dolly-toolbar__actions,
+      .dolly-toolbar__actions .btn,
+      .dolly-button-row,
+      .dolly-button-row .btn {
+        width: 100%;
+      }
+
+      .dolly-toolbar__actions .btn,
+      .dolly-button-row .btn {
+        justify-content: center;
+      }
+
+      .dolly-track-list__create,
+      .dolly-editor-head__fields,
+      .dolly-live__metrics,
+      .dolly-control-row,
+      .dolly-trigger-config,
+      .dolly-control-group:nth-child(2) .dolly-control-row:first-of-type,
+      .dolly-keyframe-editor__grid {
+        grid-template-columns: 1fr;
+      }
+
+      .dolly-keyframe-row {
+        grid-template-columns: 30px repeat(2, minmax(0, 1fr));
+      }
+
+      .dolly-keyframe-row span:nth-child(n + 4) {
+        display: none;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div id="app" class="vrchat-dolly"></div>
+
+  <script>
+    const API_BASE = '/modules/vrchat/api/dolly';
+    const CAPTURE_MODES = ['Append', 'InsertAtTime', 'ReplaceSelected', 'UpdatePoseOnly', 'UpdateSettingsOnly'];
+    const RUN_MODES = ['Once', 'Count', 'UntilStopped'];
+    const SETTINGS_APPLY_MODES = ['AtKeyframes', 'EveryFrame', 'TrackStartOnly', 'PoseOnly'];
+    const POSITION_INTERPOLATION = ['linear', 'catmullRom', 'hold'];
+    const ROTATION_INTERPOLATION = ['slerp', 'linear', 'hold'];
+
+    const app = document.getElementById('app');
+    const state = {
+      tracks: [],
+      track: null,
+      selectedTrackId: '',
+      selectedKeyframeId: '',
+      status: null,
+      events: [],
+      loading: true,
+      busy: '',
+      dirty: false,
+      notice: null,
+      newTrackName: 'New Dolly Track',
+      captureMode: 'Append',
+      captureTime: 0,
+      includePose: true,
+      includeSettings: true,
+      runMode: 'Once',
+      repeatCount: 3,
+      frameRate: 60,
+      settingsApplyMode: 'AtKeyframes',
+      stopGroup: '',
+      dollyConfig: {
+        enableAvatarCaptureTrigger: false,
+        captureAvatarParameter: 'NyautoDollyCapture'
+      },
+      triggerConfigDirty: false,
+      config: null,
+      noticeTimer: 0,
+      eventSource: null
+    };
+
+    function valueOf(payload, camel, pascal) {
+      if (!payload || typeof payload !== 'object') return undefined;
+      return payload[camel] !== undefined ? payload[camel] : payload[pascal];
+    }
+
+    function escapeHtml(value) {
+      return String(value ?? '')
+        .replaceAll('&', '&amp;')
+        .replaceAll('<', '&lt;')
+        .replaceAll('>', '&gt;')
+        .replaceAll('"', '&quot;')
+        .replaceAll("'", '&#39;');
+    }
+
+    function escapeAttr(value) {
+      return escapeHtml(value);
+    }
+
+    function numberOr(value, fallback = 0) {
+      const numeric = Number(value);
+      return Number.isFinite(numeric) ? numeric : fallback;
+    }
+
+    function clampNumber(value, min, max) {
+      const numeric = numberOr(value, min);
+      return Math.max(min, Math.min(max, numeric));
+    }
+
+    function formatNumber(value, digits = 2) {
+      if (!Number.isFinite(Number(value))) return '0';
+      return Number(value).toFixed(digits).replace(/\.?0+$/, '');
+    }
+
+    function formatTime(value) {
+      return `${formatNumber(value, 3)}s`;
+    }
+
+    function formatDateTime(value) {
+      if (!value) return 'never';
+      const date = new Date(value);
+      return Number.isNaN(date.getTime()) ? 'never' : date.toLocaleTimeString();
+    }
+
+    function sortedKeyframes(track) {
+      return [...(track?.keyframes || [])].sort((a, b) => numberOr(a?.timeSeconds) - numberOr(b?.timeSeconds));
+    }
+
+    function clone(value) {
+      return JSON.parse(JSON.stringify(value));
+    }
+
+    function vectorValue(vector, axis) {
+      return formatNumber(vector?.[axis] ?? 0, 4);
+    }
+
+    function countMapEntries(map) {
+      return Object.keys(map || {}).length;
+    }
+
+    function updateTrackInList(list, track) {
+      if (!track?.id) return list;
+      const next = list.filter(item => item.id !== track.id);
+      next.push(track);
+      return next.sort((a, b) => String(a.name || '').localeCompare(String(b.name || '')));
+    }
+
+    function selectedKeyframe() {
+      const frames = sortedKeyframes(state.track);
+      return frames.find(frame => frame.id === state.selectedKeyframeId) || frames[0] || null;
+    }
+
+    function buildPathPreview(track) {
+      const frames = sortedKeyframes(track);
+      if (frames.length === 0) return { points: '', dots: [] };
+
+      const xs = frames.map(k => numberOr(k?.position?.x));
+      const zs = frames.map(k => numberOr(k?.position?.z));
+      const minX = Math.min(...xs);
+      const maxX = Math.max(...xs);
+      const minZ = Math.min(...zs);
+      const maxZ = Math.max(...zs);
+      const width = Math.max(maxX - minX, 0.001);
+      const height = Math.max(maxZ - minZ, 0.001);
+      const pad = 18;
+      const viewWidth = 320;
+      const viewHeight = 170;
+
+      const dots = frames.map((frame, index) => {
+        const x = pad + ((numberOr(frame?.position?.x) - minX) / width) * (viewWidth - pad * 2);
+        const y = viewHeight - pad - ((numberOr(frame?.position?.z) - minZ) / height) * (viewHeight - pad * 2);
+        return { id: frame.id || index, x, y, label: index + 1 };
+      });
+
+      return {
+        points: dots.map(dot => `${formatNumber(dot.x, 3)},${formatNumber(dot.y, 3)}`).join(' '),
+        dots
+      };
+    }
+
+    function captureUiState() {
+      const active = document.activeElement;
+      const focus = active && active.id
+        ? {
+            id: active.id,
+            start: typeof active.selectionStart === 'number' ? active.selectionStart : null,
+            end: typeof active.selectionEnd === 'number' ? active.selectionEnd : null
+          }
+        : null;
+
+      return {
+        focus,
+        scrollX: window.scrollX,
+        scrollY: window.scrollY
+      };
+    }
+
+    function restoreUiState(ui) {
+      if (!ui) return;
+      window.scrollTo(ui.scrollX || 0, ui.scrollY || 0);
+      if (!ui.focus?.id) return;
+      const active = document.getElementById(ui.focus.id);
+      if (!active) return;
+      active.focus({ preventScroll: true });
+      if (typeof active.setSelectionRange === 'function' && ui.focus.start !== null) {
+        try { active.setSelectionRange(ui.focus.start, ui.focus.end ?? ui.focus.start); } catch { }
+      }
+    }
+
+    function postFrameHeight() {
+      window.clearTimeout(postFrameHeight.timer);
+      postFrameHeight.timer = window.setTimeout(() => {
+        try {
+          window.parent?.postMessage({
+            source: 'nyautomator-module-frame',
+            moduleId: 'vrchat',
+            assetPath: 'tabs/dolly.html',
+            height: Math.max(
+              document.body.scrollHeight,
+              document.documentElement.scrollHeight,
+              640
+            )
+          }, window.location.origin);
+        } catch { }
+      }, 20);
+    }
+
+    async function dollyRequest(path, options = {}) {
+      const res = await fetch(`${API_BASE}${path}`, {
+        cache: 'no-store',
+        ...options,
+        headers: {
+          ...(options.body ? { 'Content-Type': 'application/json' } : {}),
+          ...(options.headers || {})
+        }
+      });
+
+      const text = await res.text();
+      let payload = {};
+      try {
+        payload = text ? JSON.parse(text) : {};
+      } catch {
+        payload = { message: text };
+      }
+
+      if (!res.ok || payload?.success === false || payload?.Success === false) {
+        throw new Error(payload?.message || payload?.Message || payload?.error || payload?.Error || `VRChat Dolly request failed (${res.status})`);
+      }
+
+      return payload;
+    }
+
+    function setNotice(message, kind = 'info') {
+      state.notice = { message, kind };
+      window.clearTimeout(state.noticeTimer);
+      state.noticeTimer = window.setTimeout(() => {
+        state.notice = null;
+        render(captureUiState());
+      }, 5200);
+      render(captureUiState());
+    }
+
+    async function loadStatus(shouldRender = true) {
+      const payload = await dollyRequest('/status');
+      state.status = valueOf(payload, 'status', 'Status') || null;
+      if (shouldRender) render(captureUiState());
+      return state.status;
+    }
+
+    async function loadDollyConfig(shouldRender = true) {
+      const res = await fetch('/modules/vrchat/config', { cache: 'no-store' });
+      if (!res.ok) return null;
+
+      const cfg = await res.json();
+      state.config = cfg;
+      const dolly = cfg?.dolly || {};
+      state.dollyConfig = {
+        ...state.dollyConfig,
+        enableAvatarCaptureTrigger: !!dolly.enableAvatarCaptureTrigger,
+        captureAvatarParameter: dolly.captureAvatarParameter || 'NyautoDollyCapture'
+      };
+      state.triggerConfigDirty = false;
+      if (shouldRender) render(captureUiState());
+      return cfg;
+    }
+
+    async function saveDollyConfig() {
+      state.busy = 'config';
+      render(captureUiState());
+      try {
+        let cfg = state.config;
+        if (!cfg) cfg = await loadDollyConfig(false);
+        if (!cfg) throw new Error('Could not load configuration.');
+
+        const dolly = {
+          ...(cfg.dolly || {}),
+          enableAvatarCaptureTrigger: !!state.dollyConfig.enableAvatarCaptureTrigger,
+          captureAvatarParameter: state.dollyConfig.captureAvatarParameter?.trim() || 'NyautoDollyCapture'
+        };
+
+        const nextConfig = {
+          ...cfg,
+          dolly
+        };
+
+        const res = await fetch('/modules/vrchat/config', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(nextConfig)
+        });
+
+        if (!res.ok) throw new Error('Failed to save configuration.');
+
+        state.config = nextConfig;
+        state.dollyConfig = { ...state.dollyConfig, ...dolly };
+        state.triggerConfigDirty = false;
+        setNotice('Capture trigger saved.', 'success');
+        await loadStatus(false);
+      } catch (err) {
+        setNotice(err.message || 'Failed to save capture trigger.', 'error');
+      } finally {
+        state.busy = '';
+        render(captureUiState());
+      }
+    }
+
+    function patchDollyConfig(patch) {
+      state.dollyConfig = { ...state.dollyConfig, ...patch };
+      state.triggerConfigDirty = true;
+      render(captureUiState());
+    }
+
+    async function loadTracks(preferredTrackId = state.selectedTrackId, shouldRender = true) {
+      const payload = await dollyRequest('/tracks');
+      const tracks = valueOf(payload, 'tracks', 'Tracks') || [];
+      state.tracks = tracks;
+
+      const preferred = preferredTrackId && tracks.some(item => item.id === preferredTrackId)
+        ? preferredTrackId
+        : tracks[0]?.id || '';
+
+      state.selectedTrackId = preferred;
+      if (preferred) {
+        await loadTrack(preferred, false);
+      } else {
+        state.track = null;
+        state.selectedKeyframeId = '';
+        state.dirty = false;
+      }
+
+      if (shouldRender) render(captureUiState());
+    }
+
+    async function loadTrack(trackId, shouldRender = true) {
+      if (!trackId) {
+        state.track = null;
+        state.selectedKeyframeId = '';
+        if (shouldRender) render(captureUiState());
+        return null;
+      }
+
+      const payload = await dollyRequest(`/tracks/${encodeURIComponent(trackId)}`);
+      const loaded = valueOf(payload, 'track', 'Track');
+      state.track = loaded || null;
+      state.selectedTrackId = loaded?.id || '';
+      state.selectedKeyframeId = loaded?.keyframes?.[0]?.id || '';
+      state.dirty = false;
+      if (loaded?.id) await activateTrack(loaded.id, false);
+      if (shouldRender) render(captureUiState());
+      return loaded;
+    }
+
+    async function activateTrack(trackId, shouldRender = true) {
+      try {
+        await dollyRequest(`/tracks/${encodeURIComponent(trackId)}/activate`, { method: 'POST' });
+        await loadStatus(false);
+      } catch {
+        // Keep selection usable even if activation races with startup.
+      }
+      if (shouldRender) render(captureUiState());
+    }
+
+    async function selectTrack(trackId) {
+      if (!trackId || trackId === state.selectedTrackId) return;
+      if (state.dirty && !window.confirm('Discard unsaved track edits?')) return;
+
+      state.busy = 'load-track';
+      render(captureUiState());
+      try {
+        await loadTrack(trackId, false);
+      } catch (err) {
+        setNotice(err.message || 'Failed to load track.', 'error');
+      } finally {
+        state.busy = '';
+        render(captureUiState());
+      }
+    }
+
+    async function createTrack() {
+      state.busy = 'create';
+      render(captureUiState());
+      try {
+        const payload = await dollyRequest('/tracks', {
+          method: 'POST',
+          body: JSON.stringify({ name: state.newTrackName.trim() || 'New Dolly Track' })
+        });
+        const track = valueOf(payload, 'track', 'Track');
+        state.tracks = updateTrackInList(state.tracks, track);
+        state.track = track;
+        state.selectedTrackId = track?.id || '';
+        state.selectedKeyframeId = '';
+        state.dirty = false;
+        setNotice('Track created.', 'success');
+      } catch (err) {
+        setNotice(err.message || 'Failed to create track.', 'error');
+      } finally {
+        state.busy = '';
+        render(captureUiState());
+      }
+    }
+
+    async function duplicateTrack() {
+      if (!state.track?.id) return;
+
+      state.busy = 'duplicate';
+      render(captureUiState());
+      try {
+        const payload = await dollyRequest(`/tracks/${encodeURIComponent(state.track.id)}/duplicate`, { method: 'POST' });
+        const track = valueOf(payload, 'track', 'Track');
+        state.tracks = updateTrackInList(state.tracks, track);
+        state.track = track;
+        state.selectedTrackId = track?.id || '';
+        state.selectedKeyframeId = track?.keyframes?.[0]?.id || '';
+        state.dirty = false;
+        setNotice('Track duplicated.', 'success');
+      } catch (err) {
+        setNotice(err.message || 'Failed to duplicate track.', 'error');
+      } finally {
+        state.busy = '';
+        render(captureUiState());
+      }
+    }
+
+    async function deleteTrack() {
+      if (!state.track?.id || !window.confirm(`Delete "${state.track.name || 'this track'}"?`)) return;
+
+      state.busy = 'delete';
+      render(captureUiState());
+      try {
+        await dollyRequest(`/tracks/${encodeURIComponent(state.track.id)}`, { method: 'DELETE' });
+        setNotice('Track deleted.', 'success');
+        await loadTracks('', false);
+      } catch (err) {
+        setNotice(err.message || 'Failed to delete track.', 'error');
+      } finally {
+        state.busy = '';
+        render(captureUiState());
+      }
+    }
+
+    async function saveTrack(nextTrack = state.track) {
+      if (!nextTrack?.id) return;
+
+      state.busy = 'save';
+      render(captureUiState());
+      try {
+        const normalized = clone(nextTrack);
+        normalized.durationSeconds = Math.max(
+          numberOr(normalized.durationSeconds, 0),
+          ...(normalized.keyframes || []).map(k => numberOr(k.timeSeconds))
+        );
+
+        const payload = await dollyRequest(`/tracks/${encodeURIComponent(normalized.id)}`, {
+          method: 'PUT',
+          body: JSON.stringify(normalized)
+        });
+        const track = valueOf(payload, 'track', 'Track');
+        state.track = track;
+        state.tracks = updateTrackInList(state.tracks, track);
+        state.dirty = false;
+        setNotice('Track saved.', 'success');
+      } catch (err) {
+        setNotice(err.message || 'Failed to save track.', 'error');
+      } finally {
+        state.busy = '';
+        render(captureUiState());
+      }
+    }
+
+    function patchTrack(patch) {
+      if (!state.track) return;
+      state.track = { ...state.track, ...patch };
+      state.dirty = true;
+      render(captureUiState());
+    }
+
+    function patchSelectedKeyframe(patch) {
+      const selected = selectedKeyframe();
+      if (!selected || !state.track) return;
+
+      const next = clone(state.track);
+      next.keyframes = (next.keyframes || []).map(keyframe => keyframe.id === selected.id
+        ? { ...keyframe, ...patch }
+        : keyframe);
+      next.keyframes.sort((a, b) => numberOr(a.timeSeconds) - numberOr(b.timeSeconds));
+      next.durationSeconds = Math.max(numberOr(next.durationSeconds, 0), ...next.keyframes.map(k => numberOr(k.timeSeconds)));
+      state.track = next;
+      state.selectedKeyframeId = selected.id;
+      state.dirty = true;
+      render(captureUiState());
+    }
+
+    function patchSelectedVector(vectorName, axis, value) {
+      const selected = selectedKeyframe();
+      if (!selected) return;
+      const vector = { ...(selected[vectorName] || {}) };
+      vector[axis] = numberOr(value, 0);
+      patchSelectedKeyframe({ [vectorName]: vector });
+    }
+
+    function deleteSelectedKeyframe() {
+      const selected = selectedKeyframe();
+      if (!selected || !state.track) return;
+
+      const next = clone(state.track);
+      next.keyframes = (next.keyframes || []).filter(keyframe => keyframe.id !== selected.id);
+      state.track = next;
+      state.selectedKeyframeId = next.keyframes?.[0]?.id || '';
+      state.dirty = true;
+      render(captureUiState());
+    }
+
+    async function captureKeyframe() {
+      if (!state.track?.id) return;
+      if (state.dirty && !window.confirm('Capture will save over the latest stored track. Continue without saving local edits?')) return;
+
+      const needsSelected = ['ReplaceSelected', 'UpdatePoseOnly', 'UpdateSettingsOnly'].includes(state.captureMode);
+      const request = {
+        mode: state.captureMode,
+        timeSeconds: state.captureMode === 'Append' ? null : clampNumber(state.captureTime, 0, 36000),
+        keyframeId: needsSelected ? selectedKeyframe()?.id || null : null,
+        includePose: state.captureMode === 'UpdateSettingsOnly' ? false : state.includePose,
+        includeSettings: state.captureMode === 'UpdatePoseOnly' ? false : state.includeSettings
+      };
+
+      state.busy = 'capture';
+      render(captureUiState());
+      try {
+        const payload = await dollyRequest(`/tracks/${encodeURIComponent(state.track.id)}/keyframes/capture`, {
+          method: 'POST',
+          body: JSON.stringify(request)
+        });
+        const track = valueOf(payload, 'track', 'Track');
+        const keyframe = valueOf(payload, 'keyframe', 'Keyframe');
+        if (track) {
+          state.track = track;
+          state.tracks = updateTrackInList(state.tracks, track);
+          state.selectedTrackId = track.id;
+          state.selectedKeyframeId = keyframe?.id || track.keyframes?.[track.keyframes.length - 1]?.id || '';
+          state.dirty = false;
+        }
+        await loadStatus(false);
+        setNotice(valueOf(payload, 'message', 'Message') || 'Keyframe captured.', 'success');
+      } catch (err) {
+        setNotice(err.message || 'Failed to capture keyframe.', 'error');
+      } finally {
+        state.busy = '';
+        render(captureUiState());
+      }
+    }
+
+    async function playTrack() {
+      if (!state.track?.id) return;
+
+      state.busy = 'play';
+      render(captureUiState());
+      try {
+        const payload = await dollyRequest(`/tracks/${encodeURIComponent(state.track.id)}/play`, {
+          method: 'POST',
+          body: JSON.stringify({
+            runMode: state.runMode,
+            repeatCount: state.runMode === 'Count' ? clampNumber(state.repeatCount, 1, 100000) : 1,
+            frameRate: clampNumber(state.frameRate, 1, 240),
+            stopGroup: state.stopGroup.trim() || null,
+            settingsApplyMode: state.settingsApplyMode
+          })
+        });
+        await loadStatus(false);
+        setNotice(valueOf(payload, 'message', 'Message') || 'Playback started.', 'success');
+      } catch (err) {
+        setNotice(err.message || 'Failed to play track.', 'error');
+      } finally {
+        state.busy = '';
+        render(captureUiState());
+      }
+    }
+
+    async function stopTrack() {
+      if (!state.track?.id) return;
+
+      state.busy = 'stop';
+      render(captureUiState());
+      try {
+        await dollyRequest(`/tracks/${encodeURIComponent(state.track.id)}/stop`, {
+          method: 'POST',
+          body: JSON.stringify({ stopGroup: state.stopGroup.trim() || null })
+        });
+        await loadStatus(false);
+        setNotice('Track stopped.', 'success');
+      } catch (err) {
+        setNotice(err.message || 'Failed to stop track.', 'error');
+      } finally {
+        state.busy = '';
+        render(captureUiState());
+      }
+    }
+
+    async function stopAll() {
+      state.busy = 'stop-all';
+      render(captureUiState());
+      try {
+        await dollyRequest('/stop', {
+          method: 'POST',
+          body: JSON.stringify({ stopGroup: state.stopGroup.trim() || null })
+        });
+        await loadStatus(false);
+        setNotice('Playback stopped.', 'success');
+      } catch (err) {
+        setNotice(err.message || 'Failed to stop playback.', 'error');
+      } finally {
+        state.busy = '';
+        render(captureUiState());
+      }
+    }
+
+    async function refreshAll() {
+      state.busy = 'refresh';
+      render(captureUiState());
+      try {
+        await Promise.all([loadStatus(false), loadDollyConfig(false)]);
+        await loadTracks(state.selectedTrackId, false);
+      } catch (err) {
+        setNotice(err.message || 'Failed to refresh VRChat Dolly.', 'error');
+      } finally {
+        state.busy = '';
+        render(captureUiState());
+      }
+    }
+
+    async function loadInitial() {
+      state.loading = true;
+      render();
+      try {
+        await Promise.all([loadStatus(false), loadDollyConfig(false)]);
+        await loadTracks(state.selectedTrackId, false);
+      } catch (err) {
+        setNotice(err.message || 'Failed to load VRChat Dolly.', 'error');
+      } finally {
+        state.loading = false;
+        render();
+      }
+    }
+
+    function connectEvents() {
+      let stopped = false;
+      let reconnectTimer = 0;
+      let retryMs = 1000;
+
+      function connect() {
+        if (stopped) return;
+        try { state.eventSource?.close?.(); } catch { }
+
+        const source = new EventSource(`${API_BASE}/events?t=${Date.now()}`, { withCredentials: false });
+        state.eventSource = source;
+
+        source.addEventListener('status', event => {
+          try {
+            state.status = JSON.parse(event.data);
+            render(captureUiState());
+          } catch { }
+        });
+
+        source.addEventListener('dolly', event => {
+          try {
+            const payload = JSON.parse(event.data);
+            state.events = [payload, ...state.events].slice(0, 30);
+            if ([
+              'activeTrackChanged',
+              'keyframeCaptured',
+              'trackCreated',
+              'trackDuplicated',
+              'trackSaved',
+              'playbackStarted',
+              'playbackStopped',
+              'playbackFailed',
+              'loopCompleted'
+            ].includes(payload?.type)) {
+              loadStatus(false).catch(() => { });
+              if (['keyframeCaptured', 'trackCreated', 'trackDuplicated', 'trackSaved'].includes(payload?.type)) {
+                loadTracks(state.selectedTrackId, false).catch(() => { });
+              }
+            }
+            render(captureUiState());
+          } catch { }
+        });
+
+        source.onerror = () => {
+          try { source.close(); } catch { }
+          if (stopped) return;
+          reconnectTimer = window.setTimeout(connect, retryMs);
+          retryMs = Math.min(retryMs * 2, 30000);
+        };
+      }
+
+      connect();
+      window.addEventListener('beforeunload', () => {
+        stopped = true;
+        window.clearTimeout(reconnectTimer);
+        try { state.eventSource?.close?.(); } catch { }
+      });
+    }
+
+    function field(label, id, inner) {
+      return `<label class="dolly-field" for="${escapeAttr(id)}"><span>${escapeHtml(label)}</span>${inner}</label>`;
+    }
+
+    function optionList(values, selected) {
+      return values.map(value => `<option value="${escapeAttr(value)}" ${value === selected ? 'selected' : ''}>${escapeHtml(value)}</option>`).join('');
+    }
+
+    function statusPill(label, active) {
+      return `<span class="dolly-status-pill ${active ? 'is-active' : ''}"><span class="dolly-status-pill__dot"></span>${escapeHtml(label)}</span>`;
+    }
+
+    function renderTracks() {
+      if (state.tracks.length === 0) {
+        return '<div class="dolly-empty">No Dolly tracks yet.</div>';
+      }
+
+      return state.tracks
+        .slice()
+        .sort((a, b) => String(a.name || '').localeCompare(String(b.name || '')))
+        .map(track => {
+          const keyframes = track.keyframes || [];
+          return `
+            <button type="button" class="dolly-track-item ${track.id === state.selectedTrackId ? 'is-selected' : ''}" data-track-id="${escapeAttr(track.id)}">
+              <span class="dolly-track-item__name">${escapeHtml(track.name || track.id)}</span>
+              <span class="dolly-track-item__meta">${keyframes.length} keyframes | ${formatTime(track.durationSeconds || 0)}</span>
+            </button>`;
+        })
+        .join('');
+    }
+
+    function renderPathPreview(pathPreview, keyframes, selected) {
+      const dots = pathPreview.dots.map(dot => {
+        const frame = keyframes[dot.label - 1];
+        const isSelected = frame?.id === selected?.id;
+        return `
+          <g class="${isSelected ? 'is-selected' : ''}">
+            <circle cx="${formatNumber(dot.x, 3)}" cy="${formatNumber(dot.y, 3)}" r="${isSelected ? 5 : 4}"></circle>
+            <text x="${formatNumber(dot.x + 8, 3)}" y="${formatNumber(dot.y - 6, 3)}">${dot.label}</text>
+          </g>`;
+      }).join('');
+
+      return `
+        <svg class="dolly-path" viewBox="0 0 320 170" role="img" aria-label="Dolly path preview">
+          <rect x="1" y="1" width="318" height="168" rx="8"></rect>
+          ${pathPreview.points ? `<polyline points="${escapeAttr(pathPreview.points)}"></polyline>` : ''}
+          ${dots}
+        </svg>`;
+    }
+
+    function renderKeyframes(keyframes, selected) {
+      if (keyframes.length === 0) {
+        return '<div class="dolly-empty">No keyframes captured.</div>';
+      }
+
+      return keyframes.map((keyframe, index) => `
+        <button type="button" class="dolly-keyframe-row ${selected?.id === keyframe.id ? 'is-selected' : ''}" data-keyframe-id="${escapeAttr(keyframe.id)}">
+          <span class="dolly-keyframe-row__index">${index + 1}</span>
+          <span>${formatTime(keyframe.timeSeconds)}</span>
+          <span>X ${formatNumber(keyframe.position?.x, 2)}</span>
+          <span>Y ${formatNumber(keyframe.position?.y, 2)}</span>
+          <span>Z ${formatNumber(keyframe.position?.z, 2)}</span>
+          <span>${countMapEntries(keyframe.camera?.sliders)} sliders</span>
+        </button>`).join('');
+    }
+
+    function renderSelectedKeyframe(selected) {
+      if (!selected) return '';
+
+      const sliders = Object.entries(selected.camera?.sliders || {})
+        .slice(0, 12)
+        .map(([key, value]) => `<span>${escapeHtml(key)}: ${formatNumber(value, 3)}</span>`)
+        .join('');
+      const toggles = Object.entries(selected.camera?.toggles || {})
+        .slice(0, 12)
+        .map(([key, value]) => `<span>${escapeHtml(key)}: ${value ? 'on' : 'off'}</span>`)
+        .join('');
+
+      return `
+        <section class="dolly-keyframe-editor">
+          <div class="dolly-section-title">Selected Keyframe</div>
+          <div class="dolly-keyframe-editor__grid">
+            ${field('Time', 'kf-time', `<input id="kf-time" class="input" type="number" min="0" step="0.001" value="${escapeAttr(formatNumber(selected.timeSeconds, 3))}">`)}
+            ${['x', 'y', 'z'].map(axis => field(`Position ${axis.toUpperCase()}`, `pos-${axis}`, `<input id="pos-${axis}" class="input" type="number" step="0.001" value="${escapeAttr(vectorValue(selected.position, axis))}">`)).join('')}
+            ${['x', 'y', 'z'].map(axis => field(`Euler ${axis.toUpperCase()}`, `rot-${axis}`, `<input id="rot-${axis}" class="input" type="number" step="0.001" value="${escapeAttr(vectorValue(selected.eulerDegrees, axis))}">`)).join('')}
+          </div>
+          <div class="dolly-settings-summary">
+            <span>Mode ${escapeHtml(selected.camera?.modeName ?? selected.camera?.mode ?? 'n/a')}</span>
+            <span>${countMapEntries(selected.camera?.sliders)} sliders</span>
+            <span>${countMapEntries(selected.camera?.toggles)} toggles</span>
+          </div>
+          <div class="dolly-settings-map">${sliders}${toggles}</div>
+          <div class="dolly-button-row">
+            <button type="button" class="btn danger outline" data-action="delete-keyframe">Delete Keyframe</button>
+          </div>
+        </section>`;
+    }
+
+    function renderActivePlaybacks() {
+      const playbacks = state.status?.activePlaybacks || [];
+      if (playbacks.length === 0) {
+        return '<div class="dolly-empty">No active playback.</div>';
+      }
+
+      return playbacks.map(playback => `
+        <div class="dolly-playback-item">
+          <strong>${escapeHtml(playback.trackName || playback.trackId || 'Track')}</strong>
+          <span>${escapeHtml(playback.runMode || 'Once')} / loop ${escapeHtml(playback.completedLoops ?? 0)}</span>
+          <span>${formatTime(playback.trackTimeSeconds)} at ${escapeHtml(playback.frameRate || 60)} FPS</span>
+        </div>`).join('');
+    }
+
+    function renderEvents() {
+      if (state.events.length === 0) {
+        return '<div class="dolly-empty">No dolly events yet.</div>';
+      }
+
+      return state.events.map((event, index) => `
+        <div class="dolly-event dolly-event--${escapeAttr(event.type || 'info')}" data-event-index="${index}">
+          <span>${formatDateTime(event.timestampUtc)}</span>
+          <strong>${escapeHtml(event.type || 'event')}</strong>
+          <p>${escapeHtml(event.message || '')}</p>
+        </div>`).join('');
+    }
+
+    function renderEditor(track, keyframes, selected) {
+      if (state.loading) {
+        return '<main class="dolly-main"><section class="dolly-editor-empty">Loading VRChat Dolly...</section></main>';
+      }
+
+      if (!track) {
+        return '<main class="dolly-main"><section class="dolly-editor-empty">Create or select a Dolly track to start capturing keyframes.</section></main>';
+      }
+
+      const pathPreview = buildPathPreview(track);
+      const canCapture = !!track?.id && state.status?.enabled !== false;
+      const canPlay = !!track?.id && keyframes.length >= 2 && state.status?.enabled !== false;
+      const isPlayingSelected = !!state.status?.activePlaybacks?.some(playback => playback.trackId === track.id && playback.isRunning);
+
+      return `
+        <main class="dolly-main">
+          <section class="dolly-editor-head">
+            <div class="dolly-editor-head__fields">
+              ${field('Name', 'track-name', `<input id="track-name" class="input" value="${escapeAttr(track.name || '')}">`)}
+              ${field('Duration', 'track-duration', `<input id="track-duration" class="input" type="number" min="0" step="0.001" value="${escapeAttr(formatNumber(track.durationSeconds, 3))}">`)}
+              ${field('Position', 'track-position-interpolation', `<select id="track-position-interpolation" class="select">${optionList(POSITION_INTERPOLATION, track.defaultPositionInterpolation || 'linear')}</select>`)}
+              ${field('Rotation', 'track-rotation-interpolation', `<select id="track-rotation-interpolation" class="select">${optionList(ROTATION_INTERPOLATION, track.defaultRotationInterpolation || 'slerp')}</select>`)}
+            </div>
+            <div class="dolly-editor-head__actions">
+              <button type="button" class="btn primary" data-action="save-track" ${state.busy === 'save' ? 'disabled' : ''}>Save</button>
+              <button type="button" class="btn" data-action="duplicate-track" ${state.busy === 'duplicate' ? 'disabled' : ''}>Duplicate</button>
+              <button type="button" class="btn danger outline" data-action="delete-track" ${state.busy === 'delete' ? 'disabled' : ''}>Delete</button>
+            </div>
+          </section>
+
+          <section class="dolly-live">
+            <div class="dolly-live__metrics">
+              <div><span>Last Pose</span><strong>${formatDateTime(state.status?.lastPoseReceivedUtc)}</strong></div>
+              <div><span>Last Settings</span><strong>${formatDateTime(state.status?.lastSettingsReceivedUtc)}</strong></div>
+              <div><span>Track Path</span><strong title="${escapeAttr(state.status?.trackDirectory || '')}">${escapeHtml(state.status?.trackDirectory || 'default')}</strong></div>
+            </div>
+            ${renderPathPreview(pathPreview, keyframes, selected)}
+          </section>
+
+          <section class="dolly-controls">
+            <div class="dolly-control-group">
+              <div class="dolly-section-title">Capture</div>
+              <div class="dolly-control-row">
+                ${field('Mode', 'capture-mode', `<select id="capture-mode" class="select">${optionList(CAPTURE_MODES, state.captureMode)}</select>`)}
+                ${field('Time', 'capture-time', `<input id="capture-time" class="input" type="number" min="0" step="0.001" value="${escapeAttr(formatNumber(state.captureTime, 3))}" ${state.captureMode === 'Append' ? 'disabled' : ''}>`)}
+              </div>
+              <div class="dolly-toggle-row">
+                <label class="dolly-toggle"><input id="include-pose" type="checkbox" ${state.includePose ? 'checked' : ''} ${state.captureMode === 'UpdateSettingsOnly' ? 'disabled' : ''}> Pose</label>
+                <label class="dolly-toggle"><input id="include-settings" type="checkbox" ${state.includeSettings ? 'checked' : ''} ${state.captureMode === 'UpdatePoseOnly' ? 'disabled' : ''}> Settings</label>
+              </div>
+              <div class="dolly-trigger-config">
+                <label class="dolly-toggle"><input id="avatar-trigger" type="checkbox" ${state.dollyConfig.enableAvatarCaptureTrigger ? 'checked' : ''}> Avatar Trigger</label>
+                ${field('Parameter', 'trigger-param', `<input id="trigger-param" class="input" value="${escapeAttr(state.dollyConfig.captureAvatarParameter || '')}">`)}
+                <button type="button" class="btn" data-action="save-trigger" ${!state.triggerConfigDirty || state.busy === 'config' ? 'disabled' : ''}>Save Trigger</button>
+              </div>
+              <button type="button" class="btn primary" data-action="capture-keyframe" ${!canCapture || state.busy === 'capture' ? 'disabled' : ''}>Capture Keyframe</button>
+            </div>
+
+            <div class="dolly-control-group">
+              <div class="dolly-section-title">Playback</div>
+              <div class="dolly-control-row">
+                ${field('Run', 'run-mode', `<select id="run-mode" class="select">${optionList(RUN_MODES, state.runMode)}</select>`)}
+                ${field('Count', 'repeat-count', `<input id="repeat-count" class="input" type="number" min="1" step="1" value="${escapeAttr(state.repeatCount)}" ${state.runMode !== 'Count' ? 'disabled' : ''}>`)}
+                ${field('FPS', 'frame-rate', `<input id="frame-rate" class="input" type="number" min="1" max="240" step="1" value="${escapeAttr(state.frameRate)}">`)}
+              </div>
+              <div class="dolly-control-row">
+                ${field('Settings', 'settings-apply-mode', `<select id="settings-apply-mode" class="select">${optionList(SETTINGS_APPLY_MODES, state.settingsApplyMode)}</select>`)}
+                ${field('Stop Group', 'stop-group', `<input id="stop-group" class="input" value="${escapeAttr(state.stopGroup)}">`)}
+              </div>
+              <div class="dolly-button-row">
+                <button type="button" class="btn primary" data-action="play-track" ${!canPlay || state.busy === 'play' ? 'disabled' : ''}>Play</button>
+                <button type="button" class="btn" data-action="stop-track" ${!isPlayingSelected || state.busy === 'stop' ? 'disabled' : ''}>Stop Track</button>
+                <button type="button" class="btn" data-action="stop-all" ${state.busy === 'stop-all' ? 'disabled' : ''}>Stop All</button>
+              </div>
+            </div>
+          </section>
+
+          <section class="dolly-timeline">
+            <div class="dolly-section-title">Keyframes</div>
+            <div class="dolly-keyframe-list" role="list">${renderKeyframes(keyframes, selected)}</div>
+          </section>
+
+          ${renderSelectedKeyframe(selected)}
+        </main>`;
+    }
+
+    function render(ui) {
+      const keyframes = sortedKeyframes(state.track);
+      const selected = selectedKeyframe();
+      if (selected?.id && state.selectedKeyframeId !== selected.id) {
+        state.selectedKeyframeId = selected.id;
+      }
+
+      const activeTrackName = state.tracks.find(track => track.id === state.status?.activeCaptureTrackId)?.name || state.status?.activeCaptureTrackId || '';
+      const notice = state.notice
+        ? `<div class="dolly-notice dolly-notice--${escapeAttr(state.notice.kind || 'info')}">${escapeHtml(state.notice.message)}</div>`
+        : '';
+
+      app.innerHTML = `
+        <div class="dolly-toolbar">
+          <div class="dolly-toolbar__title">
+            <span class="dolly-toolbar__icon"><img src="/modules/vrchat/assets/icons/vrchat.svg" alt=""></span>
+            <div>
+              <h2>VRChat Dolly</h2>
+              <div class="dolly-toolbar__meta">
+                <span>${state.tracks.length} tracks</span>
+                ${state.dirty ? '<span class="dolly-unsaved">Unsaved edits</span>' : ''}
+                ${activeTrackName ? `<span class="dolly-active-track">Active ${escapeHtml(activeTrackName)}</span>` : ''}
+              </div>
+            </div>
+          </div>
+          <div class="dolly-toolbar__actions">
+            <button type="button" class="btn" data-action="refresh" ${state.busy === 'refresh' ? 'disabled' : ''}>Refresh</button>
+            <button type="button" class="btn primary" data-action="create-track" ${state.busy === 'create' ? 'disabled' : ''}>New Track</button>
+          </div>
+        </div>
+
+        ${notice}
+
+        <div class="dolly-status-strip">
+          ${statusPill('Enabled', state.status?.enabled !== false)}
+          ${statusPill('OSC Sending', !!state.status?.oscSending)}
+          ${statusPill('OSC Listening', !!state.status?.oscListening)}
+          ${statusPill('Pose Read', !!state.status?.poseReadObserved)}
+          ${statusPill('Settings Read', !!state.status?.settingsReadObserved)}
+          ${statusPill('Pose Confirmed', !!state.status?.poseWriteConfirmed)}
+        </div>
+
+        <div class="dolly-grid">
+          <aside class="dolly-track-list">
+            <div class="dolly-track-list__create">
+              <input id="new-track-name" class="input" value="${escapeAttr(state.newTrackName)}" placeholder="New track name">
+              <button type="button" class="btn" data-action="create-track" ${state.busy === 'create' ? 'disabled' : ''}>Create</button>
+            </div>
+            <div class="dolly-track-list__items">${renderTracks()}</div>
+          </aside>
+
+          ${renderEditor(state.track, keyframes, selected)}
+
+          <aside class="dolly-sidebar">
+            <section class="dolly-side-section">
+              <div class="dolly-section-title">Active</div>
+              <div class="dolly-playback-list">${renderActivePlaybacks()}</div>
+            </section>
+            <section class="dolly-side-section">
+              <div class="dolly-section-title">Events</div>
+              <div class="dolly-event-list">${renderEvents()}</div>
+            </section>
+          </aside>
+        </div>`;
+
+      postFrameHeight();
+      restoreUiState(ui);
+    }
+
+    document.addEventListener('click', event => {
+      const trackButton = event.target.closest('[data-track-id]');
+      if (trackButton) {
+        selectTrack(trackButton.dataset.trackId);
+        return;
+      }
+
+      const keyframeButton = event.target.closest('[data-keyframe-id]');
+      if (keyframeButton) {
+        state.selectedKeyframeId = keyframeButton.dataset.keyframeId;
+        const selected = selectedKeyframe();
+        if (selected) state.captureTime = numberOr(selected.timeSeconds);
+        render(captureUiState());
+        return;
+      }
+
+      const button = event.target.closest('[data-action]');
+      if (!button || button.disabled) return;
+
+      switch (button.dataset.action) {
+        case 'refresh': refreshAll(); break;
+        case 'create-track': createTrack(); break;
+        case 'save-track': saveTrack(); break;
+        case 'duplicate-track': duplicateTrack(); break;
+        case 'delete-track': deleteTrack(); break;
+        case 'save-trigger': saveDollyConfig(); break;
+        case 'capture-keyframe': captureKeyframe(); break;
+        case 'play-track': playTrack(); break;
+        case 'stop-track': stopTrack(); break;
+        case 'stop-all': stopAll(); break;
+        case 'delete-keyframe': deleteSelectedKeyframe(); break;
+      }
+    });
+
+    document.addEventListener('input', event => {
+      const target = event.target;
+      switch (target.id) {
+        case 'new-track-name':
+          state.newTrackName = target.value;
+          break;
+        case 'track-name':
+          patchTrack({ name: target.value });
+          break;
+        case 'track-duration':
+          patchTrack({ durationSeconds: clampNumber(target.value, 0, 36000) });
+          break;
+        case 'capture-time':
+          state.captureTime = numberOr(target.value, 0);
+          break;
+        case 'repeat-count':
+          state.repeatCount = clampNumber(target.value, 1, 100000);
+          break;
+        case 'frame-rate':
+          state.frameRate = clampNumber(target.value, 1, 240);
+          break;
+        case 'stop-group':
+          state.stopGroup = target.value;
+          break;
+        case 'trigger-param':
+          patchDollyConfig({ captureAvatarParameter: target.value });
+          break;
+        case 'kf-time':
+          patchSelectedKeyframe({ timeSeconds: clampNumber(target.value, 0, 36000) });
+          break;
+        case 'pos-x':
+        case 'pos-y':
+        case 'pos-z':
+          patchSelectedVector('position', target.id.slice(-1), target.value);
+          break;
+        case 'rot-x':
+        case 'rot-y':
+        case 'rot-z':
+          patchSelectedVector('eulerDegrees', target.id.slice(-1), target.value);
+          break;
+      }
+    });
+
+    document.addEventListener('change', event => {
+      const target = event.target;
+      switch (target.id) {
+        case 'track-position-interpolation':
+          patchTrack({ defaultPositionInterpolation: target.value });
+          break;
+        case 'track-rotation-interpolation':
+          patchTrack({ defaultRotationInterpolation: target.value });
+          break;
+        case 'capture-mode':
+          state.captureMode = target.value;
+          render(captureUiState());
+          break;
+        case 'include-pose':
+          state.includePose = target.checked;
+          render(captureUiState());
+          break;
+        case 'include-settings':
+          state.includeSettings = target.checked;
+          render(captureUiState());
+          break;
+        case 'avatar-trigger':
+          patchDollyConfig({ enableAvatarCaptureTrigger: target.checked });
+          break;
+        case 'run-mode':
+          state.runMode = target.value;
+          render(captureUiState());
+          break;
+        case 'settings-apply-mode':
+          state.settingsApplyMode = target.value;
+          render(captureUiState());
+          break;
+      }
+    });
+
+    loadInitial();
+    connectEvents();
+  </script>
+</body>
+</html>

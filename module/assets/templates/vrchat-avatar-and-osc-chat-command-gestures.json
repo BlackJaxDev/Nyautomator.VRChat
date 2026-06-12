@@ -1,0 +1,48 @@
+{
+  "$schema": "nyautomator.template.v1",
+  "id": "vrchat-avatar-and-osc-chat-command-gestures",
+  "kind": "automation-workflow",
+  "title": "Chat command gestures",
+  "group": "VRChat Avatar And OSC",
+  "summary": "!wave / !dance -> VRChat OSC set parameter for gesture/animation -> cooldown guard.",
+  "description": "Chat command gestures: !wave / !dance -> VRChat OSC set parameter for gesture/animation -> cooldown guard.",
+  "rootOnly": true,
+  "generatedFrom": "docs/template-ideas.md",
+  "triggers": [
+    {
+      "id": "trigger-1",
+      "actionType": "Chat.Command",
+      "actionConfig": {
+        "Command": "wave",
+        "CaseSensitive": false
+      },
+      "actionName": "Chat Command !wave"
+    }
+  ],
+  "messageTemplate": "{{ChatterUserName}} ran !{{CommandName}}: {{Arguments}}",
+  "constants": [
+    {
+      "key": "oscParameter",
+      "name": "VRChat OSC Parameter",
+      "value": "GestureLeft",
+      "type": "string"
+    },
+    {
+      "key": "oscValue",
+      "name": "VRChat OSC Value",
+      "value": "true",
+      "type": "string"
+    },
+    {
+      "key": "variableName",
+      "name": "Global Variable Name",
+      "value": "chat_command_gestures",
+      "type": "string"
+    }
+  ],
+  "steps": [
+    "vrchat-parameter",
+    "set-global-variable",
+    "log"
+  ]
+}

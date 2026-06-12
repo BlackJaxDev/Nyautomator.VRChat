@@ -1,0 +1,810 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>VRChat Settings</title>
+  <style>
+    :root {
+      color-scheme: dark;
+      --page-bg: #14171d;
+      --surface: #11151d;
+      --surface-soft: #171d27;
+      --surface-raised: #1b2230;
+      --button-bg: #0d1118;
+      --border: #293241;
+      --border-strong: #37445a;
+      --text: #eef2f7;
+      --subtext: #aab3c2;
+      --muted: #7f8a9d;
+      --accent: #6bbcff;
+      --accent-weak: #b7dbff;
+      --success: #3ddc84;
+      --warning: #f4b544;
+      --danger: #ff7777;
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      background: transparent;
+      color: var(--text);
+    }
+
+    * { box-sizing: border-box; }
+
+    html,
+    body {
+      margin: 0;
+      min-width: 0;
+      background: transparent;
+    }
+
+    body {
+      overflow: hidden;
+      font-size: 15px;
+      line-height: 1.45;
+    }
+
+    body,
+    button,
+    input {
+      font: inherit;
+    }
+
+    button,
+    input {
+      min-width: 0;
+    }
+
+    .module-shell {
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+      padding: 0;
+    }
+
+    .status-card,
+    .flow-card,
+    .compact-details {
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      background: var(--surface);
+    }
+
+    .status-card {
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+      padding: 16px;
+    }
+
+    .status-topline {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 14px;
+    }
+
+    .status-copy {
+      min-width: 0;
+    }
+
+    h2,
+    h3 {
+      margin: 0;
+      color: var(--text);
+      letter-spacing: 0;
+    }
+
+    h2 {
+      font-size: 1.02rem;
+      font-weight: 750;
+    }
+
+    h3 {
+      font-size: 0.96rem;
+      font-weight: 750;
+    }
+
+    .message {
+      margin: 4px 0 0;
+      max-width: 62ch;
+      color: var(--subtext);
+    }
+
+    .message.success { color: color-mix(in srgb, var(--success) 82%, var(--text)); }
+    .message.warning { color: color-mix(in srgb, var(--warning) 82%, var(--text)); }
+    .message.error { color: #ffb4b4; }
+
+    .status-pill {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 30px;
+      padding: 5px 12px;
+      border: 1px solid var(--border-strong);
+      border-radius: 999px;
+      color: var(--subtext);
+      background: rgba(148, 163, 184, 0.08);
+      font-size: 0.72rem;
+      font-weight: 800;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      white-space: nowrap;
+    }
+
+    .status-pill.success {
+      color: var(--success);
+      border-color: color-mix(in srgb, var(--success) 48%, var(--border));
+      background: color-mix(in srgb, var(--success) 13%, transparent);
+    }
+
+    .status-pill.warning {
+      color: var(--warning);
+      border-color: color-mix(in srgb, var(--warning) 48%, var(--border));
+      background: color-mix(in srgb, var(--warning) 12%, transparent);
+    }
+
+    .status-pill.error {
+      color: #ffc4c4;
+      border-color: color-mix(in srgb, var(--danger) 55%, var(--border));
+      background: color-mix(in srgb, var(--danger) 14%, transparent);
+    }
+
+    .quick-meta {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+
+    .meta-chip {
+      display: inline-flex;
+      align-items: center;
+      min-height: 28px;
+      max-width: 100%;
+      padding: 4px 9px;
+      border: 1px solid color-mix(in srgb, var(--border), var(--accent) 12%);
+      border-radius: 8px;
+      background: color-mix(in srgb, var(--surface-soft) 86%, transparent);
+      color: var(--subtext);
+      font-size: 0.84rem;
+    }
+
+    .meta-chip strong {
+      margin-left: 5px;
+      color: var(--text);
+      font-weight: 750;
+      overflow-wrap: anywhere;
+    }
+
+    .flow-card {
+      padding: 16px;
+    }
+
+    .flow-card[hidden] {
+      display: none;
+    }
+
+    .flow-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      margin-bottom: 12px;
+    }
+
+    .flow-note {
+      margin: 0 0 14px;
+      color: var(--subtext);
+    }
+
+    .form-grid {
+      display: grid;
+      grid-template-columns: minmax(116px, 160px) minmax(0, 1fr);
+      gap: 10px 12px;
+      align-items: center;
+    }
+
+    label {
+      color: var(--accent-weak);
+      font-size: 0.76rem;
+      font-weight: 800;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+    }
+
+    input {
+      width: 100%;
+      border: 1px solid var(--border-strong);
+      border-radius: 9px;
+      background: var(--button-bg);
+      color: var(--text);
+      padding: 9px 11px;
+      outline: none;
+    }
+
+    input:focus {
+      border-color: var(--accent);
+      box-shadow: 0 0 0 3px rgba(107, 188, 255, 0.13);
+    }
+
+    button {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 38px;
+      border: 1px solid var(--border-strong);
+      border-radius: 9px;
+      background: var(--button-bg);
+      color: var(--text);
+      padding: 8px 13px;
+      font-weight: 750;
+      cursor: pointer;
+      transition: border-color 0.18s ease, background 0.18s ease, transform 0.05s ease;
+      white-space: nowrap;
+    }
+
+    button:hover:not(:disabled) {
+      border-color: var(--accent);
+      background: color-mix(in srgb, var(--button-bg) 82%, var(--accent) 18%);
+    }
+
+    button:active:not(:disabled) {
+      transform: translateY(1px);
+    }
+
+    button:disabled {
+      opacity: 0.48;
+      cursor: not-allowed;
+    }
+
+    .primary {
+      color: #06121d;
+      border-color: #54a9ee;
+      background: linear-gradient(180deg, #87ccff, #5aaeee);
+    }
+
+    .danger {
+      color: #ffc7c7;
+      border-color: color-mix(in srgb, var(--danger) 64%, var(--border));
+      background: transparent;
+    }
+
+    .actions,
+    .inline-actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 9px;
+      align-items: center;
+    }
+
+    .status-actions {
+      padding-top: 4px;
+    }
+
+    .inline-actions input {
+      flex: 1 1 180px;
+    }
+
+    .compact-details {
+      overflow: hidden;
+    }
+
+    .compact-details[hidden] {
+      display: none;
+    }
+
+    .compact-details summary {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      padding: 13px 16px;
+      cursor: pointer;
+      list-style: none;
+      color: var(--text);
+      font-weight: 750;
+    }
+
+    .compact-details summary::-webkit-details-marker {
+      display: none;
+    }
+
+    .compact-details summary::after {
+      content: ">";
+      color: var(--accent);
+      transition: transform 0.18s ease;
+    }
+
+    .compact-details[open] summary {
+      border-bottom: 1px solid var(--border);
+      background: var(--surface-soft);
+    }
+
+    .compact-details[open] summary::after {
+      transform: rotate(90deg);
+    }
+
+    .details-body {
+      padding: 14px 16px 16px;
+    }
+
+    .detail-grid {
+      display: grid;
+      gap: 7px;
+      margin: 0;
+    }
+
+    .detail-row {
+      display: grid;
+      grid-template-columns: minmax(120px, 0.56fr) minmax(0, 1fr);
+      gap: 12px;
+      padding-top: 7px;
+      border-top: 1px solid rgba(148, 163, 184, 0.13);
+      color: var(--subtext);
+      font-size: 0.9rem;
+    }
+
+    .detail-row:first-child {
+      border-top: 0;
+      padding-top: 0;
+    }
+
+    .detail-row strong {
+      color: var(--text);
+      font-weight: 700;
+      text-align: right;
+      overflow-wrap: anywhere;
+    }
+
+    .muted {
+      color: var(--muted);
+    }
+
+    @media (max-width: 640px) {
+      .status-topline,
+      .flow-header {
+        flex-direction: column;
+        align-items: flex-start;
+      }
+
+      .form-grid,
+      .detail-row {
+        grid-template-columns: 1fr;
+      }
+
+      .detail-row strong {
+        text-align: left;
+      }
+
+      .actions button,
+      .inline-actions button {
+        flex: 1 1 auto;
+      }
+    }
+  </style>
+</head>
+<body>
+  <main class="module-shell">
+    <section class="status-card" id="accountPanel">
+      <div class="status-topline">
+        <div class="status-copy">
+          <h2>Account</h2>
+          <p id="message" class="message">Checking VRChat session...</p>
+        </div>
+        <span class="status-pill" id="statusPill">Checking</span>
+      </div>
+      <div id="quickMeta" class="quick-meta"></div>
+      <div class="actions status-actions">
+        <button id="refresh">Refresh</button>
+        <button id="forceRefresh">Force Refresh</button>
+        <button class="danger" id="logout">Sign Out</button>
+      </div>
+    </section>
+
+    <section class="flow-card" id="loginPanel" hidden>
+      <div class="flow-header">
+        <h3>Sign In</h3>
+      </div>
+      <div class="form-grid">
+        <label for="username">Username</label>
+        <input id="username" autocomplete="username">
+        <label for="password">Password</label>
+        <input id="password" type="password" autocomplete="current-password">
+      </div>
+      <div class="actions" style="margin-top: 12px;">
+        <button class="primary" id="login">Log In</button>
+      </div>
+    </section>
+
+    <section class="flow-card" id="totpPanel" hidden>
+      <div class="flow-header">
+        <h3>Authenticator Code</h3>
+      </div>
+      <p class="flow-note">Enter the code from your authenticator app to finish signing in.</p>
+      <div class="form-grid">
+        <label for="totp">Code</label>
+        <div class="inline-actions">
+          <input id="totp" inputmode="numeric" autocomplete="one-time-code">
+          <button class="primary" id="verifyTotp">Verify</button>
+        </div>
+      </div>
+    </section>
+
+    <section class="flow-card" id="emailPanel" hidden>
+      <div class="flow-header">
+        <h3>Email Code</h3>
+      </div>
+      <p class="flow-note" id="emailHintMessage">Enter the email verification code from VRChat.</p>
+      <div class="form-grid">
+        <label for="email">Code</label>
+        <div class="inline-actions">
+          <input id="email" autocomplete="one-time-code">
+          <button class="primary" id="verifyEmail">Verify</button>
+        </div>
+      </div>
+      <details class="compact-details" style="margin-top: 12px;">
+        <summary>Need a new email?</summary>
+        <div class="details-body">
+          <p class="flow-note">VRChat requires your password before it will send another login email.</p>
+          <div class="form-grid">
+            <label for="resendPassword">Password</label>
+            <div class="inline-actions">
+              <input id="resendPassword" type="password" autocomplete="current-password">
+              <button id="resend">Resend Email</button>
+            </div>
+          </div>
+        </div>
+      </details>
+    </section>
+
+    <section class="flow-card" id="loginPlacePanel" hidden>
+      <div class="flow-header">
+        <h3>Approve New Login</h3>
+      </div>
+      <p class="flow-note" id="loginPlaceMessage">
+        Open the login approval email from VRChat, approve the login, then press Retry.
+      </p>
+      <div class="actions">
+        <button class="primary" id="verifyLoginPlace">Retry</button>
+      </div>
+      <details class="compact-details" style="margin-top: 12px;">
+        <summary>Email or link not working?</summary>
+        <div class="details-body">
+          <div class="form-grid">
+            <label for="loginPlaceResendPassword">Password</label>
+            <div class="inline-actions">
+              <input id="loginPlaceResendPassword" type="password" autocomplete="current-password">
+              <button id="resendLoginPlace">Resend Email</button>
+            </div>
+            <label for="loginPlaceToken">Link or Token</label>
+            <div class="inline-actions">
+              <input id="loginPlaceToken" autocomplete="off">
+              <button id="verifyLoginPlaceToken">Verify Link</button>
+            </div>
+          </div>
+        </div>
+      </details>
+    </section>
+
+    <details class="compact-details" id="importPanel">
+      <summary>Import Browser Session</summary>
+      <div class="details-body">
+        <p class="flow-note">
+          Use this only when normal VRChat login cannot complete and you already have a browser session.
+        </p>
+        <div class="form-grid">
+          <label for="authCookie">Auth Cookie</label>
+          <input id="authCookie" type="password" autocomplete="off">
+          <label for="twoFactorCookie">2FA Cookie</label>
+          <div class="inline-actions">
+            <input id="twoFactorCookie" type="password" autocomplete="off">
+            <button id="importSession">Import</button>
+          </div>
+        </div>
+      </div>
+    </details>
+
+    <details class="compact-details" id="troubleshootingPanel">
+      <summary>Troubleshooting Details</summary>
+      <div class="details-body">
+        <div id="detailRows" class="detail-grid"></div>
+      </div>
+    </details>
+  </main>
+
+  <script>
+    const state = {
+      busy: false,
+      status: null
+    };
+
+    const el = id => document.getElementById(id);
+    const value = id => el(id)?.value.trim() || '';
+    const setValue = (id, next) => { if (el(id)) el(id).value = next == null ? '' : String(next); };
+    const quickMeta = el('quickMeta');
+    const detailRows = el('detailRows');
+    const statusPill = el('statusPill');
+
+    function reportFrameHeight() {
+      if (window.parent === window) return;
+      window.requestAnimationFrame(() => {
+        const height = Math.max(
+          document.body.scrollHeight,
+          document.documentElement.scrollHeight,
+          document.body.offsetHeight,
+          document.documentElement.offsetHeight
+        );
+        window.parent.postMessage({
+          type: 'nyautomator:module-frame-height',
+          moduleId: 'vrchat',
+          assetPath: 'tabs/settings.html',
+          height
+        }, window.location.origin);
+      });
+    }
+
+    function setVisible(id, visible) {
+      const node = el(id);
+      if (!node) return;
+      node.hidden = !visible;
+      reportFrameHeight();
+    }
+
+    function setBusy(busy) {
+      state.busy = busy;
+      updateControls();
+    }
+
+    function show(text, tone = '') {
+      const message = el('message');
+      message.className = `message ${tone}`.trim();
+      message.textContent = text || '';
+    }
+
+    function formatDate(value) {
+      if (!value) return '';
+      const date = new Date(value);
+      return Number.isNaN(date.getTime()) ? '' : date.toLocaleString();
+    }
+
+    function chip(label, value) {
+      if (value === undefined || value === null || value === '') return '';
+      return `<span class="meta-chip">${label}<strong>${String(value)}</strong></span>`;
+    }
+
+    function row(label, value) {
+      if (value === undefined || value === null || value === '') return '';
+      return `<div class="detail-row"><span>${label}</span><strong>${String(value)}</strong></div>`;
+    }
+
+    function normalizeStatus(payload) {
+      const source = payload?.status && typeof payload.status === 'object' ? payload.status : payload;
+      return source && typeof source === 'object' ? source : {};
+    }
+
+    function authFlags(status) {
+      const methods = Array.isArray(status.twoFactorMethods)
+        ? status.twoFactorMethods.map(method => String(method).toLowerCase())
+        : [];
+      const completed = Array.isArray(status.completedTwoFactorMethods)
+        ? status.completedTwoFactorMethods.map(method => String(method).toLowerCase())
+        : [];
+      const allowsEmail = methods.includes('emailotp');
+      const allowsTotp = methods.includes('totp');
+      const completedTotp = completed.includes('totp') || completed.includes('otp');
+      const requiresLoginPlace = !!status.requiresLoginPlaceVerification || methods.includes('loginplace');
+      const unknownMethod = !!status.requiresTwoFactor
+        && !status.requiresEmailCode
+        && !requiresLoginPlace
+        && methods.length === 0;
+      const requiresEmail = !!status.requiresEmailCode
+        || requiresLoginPlace
+        || allowsEmail
+        || (unknownMethod && completedTotp);
+      const requiresTotp = !!status.requiresTwoFactor
+        && !requiresLoginPlace
+        && !completedTotp
+        && (allowsTotp || unknownMethod || (!requiresEmail && !allowsEmail));
+
+      return { methods, completed, completedTotp, requiresLoginPlace, requiresEmail, requiresTotp };
+    }
+
+    function updateStatusPill(label, tone = '') {
+      statusPill.className = `status-pill ${tone}`.trim();
+      statusPill.textContent = label;
+    }
+
+    function renderStatus(payload, fallbackMessage = '') {
+      const status = normalizeStatus(payload);
+      state.status = status;
+
+      const flags = authFlags(status);
+      const name = status.displayName || status.accountLogin || status.userId || '';
+      const emailHint = status.pendingEmailHint || status.emailHint || '';
+      const methods = Array.isArray(status.twoFactorMethods) ? status.twoFactorMethods.join(', ') : '';
+      const completed = Array.isArray(status.completedTwoFactorMethods) ? status.completedTwoFactorMethods.join(', ') : '';
+      const lastVerified = formatDate(status.lastVerifiedUtc);
+
+      if (status.accountLogin && !value('username')) setValue('username', status.accountLogin);
+
+      quickMeta.innerHTML = [
+        chip('Stored session', status.hasStoredSession ? 'Yes' : 'No'),
+        chip('Account', name),
+        chip('Last verified', lastVerified)
+      ].join('');
+
+      detailRows.innerHTML = [
+        row('Account login', status.accountLogin),
+        row('Display name', status.displayName),
+        row('User ID', status.userId),
+        row('Email hint', emailHint),
+        row('2FA methods', methods),
+        row('Completed 2FA', completed),
+        row('Updated', formatDate(status.updatedAtUtc)),
+        row('Auto reconnect', typeof status.autoReconnect === 'boolean' ? (status.autoReconnect ? 'Enabled' : 'Disabled') : ''),
+        row('Last error', status.lastError)
+      ].join('') || '<span class="muted">No extra status details are available.</span>';
+
+      if (status.isConnected) {
+        updateStatusPill('Connected', 'success');
+        show(`Connected as ${name || 'VRChat user'}.`, 'success');
+      } else if (flags.requiresLoginPlace) {
+        updateStatusPill('Approve login', 'warning');
+        show(status.lastError || fallbackMessage || 'Approve the VRChat login email, then retry.', 'warning');
+      } else if (flags.requiresEmail) {
+        updateStatusPill('Email code', 'warning');
+        show(status.lastError || fallbackMessage || 'Enter the email verification code from VRChat.', 'warning');
+      } else if (flags.requiresTotp) {
+        updateStatusPill('2FA required', 'warning');
+        show(status.lastError || fallbackMessage || 'Enter the code from your authenticator app.', 'warning');
+      } else if (status.lastError) {
+        updateStatusPill('Error', 'error');
+        show(status.lastError, 'error');
+      } else if (status.hasStoredSession) {
+        updateStatusPill('Session stored', 'warning');
+        show(fallbackMessage || 'A VRChat session is stored, but it is not connected.', 'warning');
+      } else {
+        updateStatusPill('Not connected');
+        show(fallbackMessage || 'Sign in to enable authenticated VRChat API actions.');
+      }
+
+      const loginVisible = !status.isConnected && !flags.requiresTotp && !flags.requiresEmail && !flags.requiresLoginPlace;
+      setVisible('loginPanel', loginVisible);
+      setVisible('totpPanel', !status.isConnected && flags.requiresTotp);
+      setVisible('emailPanel', !status.isConnected && flags.requiresEmail && !flags.requiresLoginPlace);
+      setVisible('loginPlacePanel', !status.isConnected && flags.requiresLoginPlace);
+      setVisible('importPanel', !status.isConnected);
+
+      const emailText = emailHint
+        ? `Enter the email verification code sent to ${emailHint}.`
+        : 'Enter the email verification code from VRChat.';
+      el('emailHintMessage').textContent = emailText;
+      el('loginPlaceMessage').textContent = emailHint
+        ? `Open the login approval email sent to ${emailHint}, approve the login, then press Retry.`
+        : 'Open the login approval email from VRChat, approve the login, then press Retry.';
+
+      updateControls();
+      reportFrameHeight();
+    }
+
+    function updateControls() {
+      const status = state.status || {};
+      const hasSession = !!status.isConnected || !!status.hasStoredSession;
+      const username = value('username') || status.accountLogin || '';
+      const resendPassword = value('resendPassword') || value('loginPlaceResendPassword') || value('password');
+
+      el('login').disabled = state.busy || !value('username') || !value('password');
+      el('verifyTotp').disabled = state.busy || !value('totp');
+      el('verifyEmail').disabled = state.busy || !value('email');
+      el('verifyLoginPlace').disabled = state.busy;
+      el('verifyLoginPlaceToken').disabled = state.busy || !value('loginPlaceToken');
+      el('resend').disabled = state.busy || !username || !resendPassword;
+      el('resendLoginPlace').disabled = state.busy || !username || !resendPassword;
+      el('importSession').disabled = state.busy || !value('authCookie');
+      el('logout').disabled = state.busy || !hasSession;
+
+      document.querySelectorAll('button').forEach(button => {
+        if (button.id && ['login','verifyTotp','verifyEmail','verifyLoginPlace','verifyLoginPlaceToken','resend','resendLoginPlace','importSession','logout'].includes(button.id))
+          return;
+        button.disabled = state.busy;
+      });
+    }
+
+    async function request(path, init = {}) {
+      const res = await fetch(path, init);
+      const body = await res.json().catch(() => ({}));
+      if (body?.status) renderStatus(body, body.message || body.error || '');
+      if (!res.ok || body.success === false)
+        throw new Error(body.error || body.message || `HTTP ${res.status}`);
+      return body;
+    }
+
+    async function post(path, body = undefined) {
+      const init = { method: 'POST' };
+      if (body !== undefined) {
+        init.headers = { 'Content-Type': 'application/json' };
+        init.body = JSON.stringify(body);
+      }
+      return request(path, init);
+    }
+
+    async function run(work, errorPrefix = 'VRChat request failed') {
+      setBusy(true);
+      try {
+        return await work();
+      } catch (err) {
+        show(`${errorPrefix}: ${err.message || err}`, 'error');
+        return null;
+      } finally {
+        setBusy(false);
+      }
+    }
+
+    async function refresh(force = false) {
+      return run(async () => renderStatus(await request(`/modules/vrchat/api/status${force ? '?refresh=true' : ''}`)), 'Status refresh failed');
+    }
+
+    function resendBody(passwordId) {
+      const username = value('username') || state.status?.accountLogin || '';
+      const password = value(passwordId) || value('password');
+      return username && password ? { username, password } : {};
+    }
+
+    el('refresh').addEventListener('click', () => refresh(false));
+    el('forceRefresh').addEventListener('click', () => refresh(true));
+
+    el('login').addEventListener('click', () => run(async () => {
+      renderStatus(await post('/modules/vrchat/api/login', { username: value('username'), password: value('password') }));
+      setValue('password', '');
+    }, 'Login failed'));
+
+    el('verifyTotp').addEventListener('click', () => run(async () => {
+      renderStatus(await post('/modules/vrchat/api/verify-totp', { code: value('totp') }));
+      setValue('totp', '');
+    }, 'Authenticator verification failed'));
+
+    el('verifyEmail').addEventListener('click', () => run(async () => {
+      renderStatus(await post('/modules/vrchat/api/verify-email', { code: value('email') }));
+      setValue('email', '');
+    }, 'Email verification failed'));
+
+    el('verifyLoginPlace').addEventListener('click', () => run(async () => {
+      renderStatus(await post('/modules/vrchat/api/verify-login-place'));
+    }, 'Login approval check failed'));
+
+    el('verifyLoginPlaceToken').addEventListener('click', () => run(async () => {
+      renderStatus(await post('/modules/vrchat/api/verify-login-place-token', { code: value('loginPlaceToken') }));
+      setValue('loginPlaceToken', '');
+    }, 'Login link verification failed'));
+
+    el('resend').addEventListener('click', () => run(async () => {
+      renderStatus(await post('/modules/vrchat/api/resend-email', resendBody('resendPassword')));
+      setValue('resendPassword', '');
+    }, 'Resend failed'));
+
+    el('resendLoginPlace').addEventListener('click', () => run(async () => {
+      renderStatus(await post('/modules/vrchat/api/resend-email', resendBody('loginPlaceResendPassword')));
+      setValue('loginPlaceResendPassword', '');
+    }, 'Resend failed'));
+
+    el('importSession').addEventListener('click', () => run(async () => {
+      renderStatus(await post('/modules/vrchat/api/import-session', { authCookie: value('authCookie'), twoFactorCookie: value('twoFactorCookie') }));
+      setValue('authCookie', '');
+      setValue('twoFactorCookie', '');
+    }, 'Session import failed'));
+
+    el('logout').addEventListener('click', () => run(async () => {
+      renderStatus(await post('/modules/vrchat/api/logout'));
+    }, 'Sign out failed'));
+
+    ['username','password','totp','email','resendPassword','loginPlaceResendPassword','loginPlaceToken','authCookie','twoFactorCookie'].forEach(id => {
+      el(id)?.addEventListener('input', () => updateControls());
+    });
+    document.querySelectorAll('details').forEach(node => node.addEventListener('toggle', reportFrameHeight));
+    if ('ResizeObserver' in window)
+      new ResizeObserver(reportFrameHeight).observe(document.body);
+    window.addEventListener('load', reportFrameHeight);
+
+    updateControls();
+    refresh(false);
+  </script>
+</body>
+</html>

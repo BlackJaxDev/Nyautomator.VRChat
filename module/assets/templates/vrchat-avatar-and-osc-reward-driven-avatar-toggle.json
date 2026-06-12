@@ -1,0 +1,72 @@
+{
+  "$schema": "nyautomator.template.v1",
+  "id": "vrchat-avatar-and-osc-reward-driven-avatar-toggle",
+  "kind": "automation-workflow",
+  "title": "Reward-driven avatar toggle",
+  "group": "VRChat Avatar And OSC",
+  "summary": "channel point reward -> set avatar parameter on -> timed delay -> set off -> log redemption.",
+  "description": "Reward-driven avatar toggle: channel point reward -> set avatar parameter on -> timed delay -> set off -> log redemption.",
+  "rootOnly": true,
+  "generatedFrom": "docs/template-ideas.md",
+  "triggers": [
+    {
+      "id": "trigger-1",
+      "actionType": "Twitch.EventSub.channel.channel_points_custom_reward_redemption.add.1.ByReward",
+      "actionConfig": {
+        "Reward": ""
+      },
+      "actionName": "Channel Point Redemption"
+    }
+  ],
+  "messageTemplate": "{{UserName}} redeemed {{Reward.Title}}: {{UserInput}}",
+  "constants": [
+    {
+      "key": "mediaPath",
+      "name": "Alert Media Path",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "audioPath",
+      "name": "Alert Audio Path",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "durationSeconds",
+      "name": "Alert Duration Seconds",
+      "value": 6,
+      "type": "float64"
+    },
+    {
+      "key": "playTextToSpeech",
+      "name": "Play Text To Speech",
+      "value": false,
+      "type": "boolean"
+    },
+    {
+      "key": "oscParameter",
+      "name": "VRChat OSC Parameter",
+      "value": "GestureLeft",
+      "type": "string"
+    },
+    {
+      "key": "oscValue",
+      "name": "VRChat OSC Value",
+      "value": "true",
+      "type": "string"
+    },
+    {
+      "key": "variableName",
+      "name": "Global Variable Name",
+      "value": "reward_driven_avatar_toggle",
+      "type": "string"
+    }
+  ],
+  "steps": [
+    "alert",
+    "vrchat-parameter",
+    "toggle-global-variable",
+    "log"
+  ]
+}

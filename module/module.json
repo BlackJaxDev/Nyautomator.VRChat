@@ -1,0 +1,202 @@
+{
+  "schemaVersion": 1,
+  "id": "vrchat",
+  "displayName": "VRChat",
+  "description": "VRChat OSC, cloud API, avatar, and Dolly integration.",
+  "version": "0.1.0",
+  "minHostVersion": "0.0.0",
+  "entryAssembly": "Nyautomator.Module.VRChat.dll",
+  "entryType": "Nyautomator.Modules.VRChat.VRChatModule",
+  "capabilities": [
+    "runtime.integration",
+    "automation.nodes",
+    "authenticated.request",
+    "dashboard.cards",
+    "settings.cards",
+    "integration.tabs",
+    "graph.templates",
+    "icons"
+  ],
+  "assetsRoot": "assets",
+  "contributions": {
+    "icons": [
+      {
+        "id": "vrchat",
+        "path": "icons/vrchat.svg"
+      }
+    ],
+    "dashboardCards": [
+      {
+        "id": "api",
+        "title": "VRChat API",
+        "icon": "vrchat",
+        "renderer": "status-card",
+        "statusSource": "/modules/vrchat/api/status",
+        "actions": [
+          { "id": "refresh", "label": "Refresh", "method": "GET", "path": "/modules/vrchat/api/status" },
+          { "id": "forceRefresh", "label": "Force Refresh", "method": "GET", "path": "/modules/vrchat/api/status?refresh=true" }
+        ],
+        "order": 500
+      },
+      {
+        "id": "osc",
+        "title": "VRChat OSC",
+        "icon": "vrchat",
+        "renderer": "toggle-card",
+        "statusSource": "/modules/vrchat/api/osc/status",
+        "metadata": {
+          "toggles": [
+            {
+              "id": "sending",
+              "label": "Sending",
+              "statusField": "sending",
+              "method": "POST",
+              "path": "/modules/vrchat/api/osc/sending",
+              "body": { "enabled": "$value" }
+            },
+            {
+              "id": "listening",
+              "label": "Listening",
+              "statusField": "listening",
+              "method": "POST",
+              "path": "/modules/vrchat/api/osc/listening",
+              "body": { "enabled": "$value" }
+            },
+            {
+              "id": "passthrough",
+              "label": "Passthrough",
+              "statusField": "passthrough",
+              "method": "POST",
+              "path": "/modules/vrchat/api/osc/passthrough",
+              "body": {
+                "enabled": "$value",
+                "inputPort": "$status.inputPort",
+                "outputPort": "$status.outputPort"
+              },
+              "detailsWhenEnabled": [
+                { "label": "Input", "statusField": "inputPort", "format": "mono" },
+                { "label": "Output", "statusField": "outputPort", "format": "mono" }
+              ]
+            }
+          ]
+        },
+        "order": 510
+      }
+    ],
+    "settingsCards": [
+      {
+        "id": "settings",
+        "title": "VRChat",
+        "icon": "vrchat",
+        "renderer": "asset-frame",
+        "statusSource": "/modules/vrchat/api/status",
+        "assetPath": "tabs/settings.html",
+        "order": 500
+      }
+    ],
+    "integrationTabs": [
+      {
+        "id": "osc",
+        "label": "VRChat OSC",
+        "icon": "vrchat",
+        "renderer": "asset-frame",
+        "assetPath": "tabs/osc.html",
+        "route": "vrchat",
+        "order": 500
+      },
+      {
+        "id": "dolly",
+        "label": "VRChat Dolly",
+        "icon": "vrchat",
+        "renderer": "asset-frame",
+        "assetPath": "tabs/dolly.html",
+        "route": "vrchat-dolly",
+        "order": 510
+      }
+    ],
+    "graphTemplates": [
+      {
+        "id": "vrchat-avatar-and-osc-camera-trigger-automation",
+        "label": "Camera Trigger Automation",
+        "description": "VRChat OSC camera events can switch OBS scenes or toggle sources for photo mode.",
+        "category": "VRChat",
+        "path": "templates/vrchat-avatar-and-osc-camera-trigger-automation.json",
+        "requiredModuleIds": [ "vrchat" ],
+        "order": 500
+      },
+      {
+        "id": "vrchat-avatar-and-osc-chat-command-gestures",
+        "label": "Chat Command Gestures",
+        "description": "Chat commands can drive VRChat OSC gesture or animation parameters.",
+        "category": "VRChat",
+        "path": "templates/vrchat-avatar-and-osc-chat-command-gestures.json",
+        "requiredModuleIds": [ "vrchat" ],
+        "order": 501
+      },
+      {
+        "id": "vrchat-avatar-and-osc-event-to-avatar-reaction",
+        "label": "Event To Avatar Reaction",
+        "description": "Stream events can toggle VRChat avatar props or emotes with OSC and a reset delay.",
+        "category": "VRChat",
+        "path": "templates/vrchat-avatar-and-osc-event-to-avatar-reaction.json",
+        "requiredModuleIds": [ "vrchat" ],
+        "order": 502
+      },
+      {
+        "id": "vrchat-avatar-and-osc-reward-driven-avatar-toggle",
+        "label": "Reward-Driven Avatar Toggle",
+        "description": "Channel point rewards can toggle a VRChat avatar parameter and reset it after a delay.",
+        "category": "VRChat",
+        "path": "templates/vrchat-avatar-and-osc-reward-driven-avatar-toggle.json",
+        "requiredModuleIds": [ "vrchat" ],
+        "order": 503
+      },
+      {
+        "id": "vrchat-avatar-and-osc-speech-to-chatbox",
+        "label": "Speech To Chatbox",
+        "description": "Recognized speech can be filtered and sent to the VRChat OSC chatbox.",
+        "category": "VRChat",
+        "path": "templates/vrchat-avatar-and-osc-speech-to-chatbox.json",
+        "requiredModuleIds": [ "vrchat" ],
+        "order": 504
+      },
+      {
+        "id": "vrchat-avatar-and-osc-stream-stats-in-chatbox",
+        "label": "Stream Stats In Chatbox",
+        "description": "Timed stream counters can be formatted and sent to the VRChat OSC chatbox.",
+        "category": "VRChat",
+        "path": "templates/vrchat-avatar-and-osc-stream-stats-in-chatbox.json",
+        "requiredModuleIds": [ "vrchat" ],
+        "order": 505
+      },
+      {
+        "id": "vrchat-avatar-twitch-redeems",
+        "label": "VRChat Avatar Twitch Redeems",
+        "description": "Refresh VRChat avatars into a bitfield and sync enabled items into Twitch channel point rewards.",
+        "category": "VRChat",
+        "path": "templates/vrchat-avatar-twitch-redeems.json",
+        "requiredModuleIds": [ "vrchat" ],
+        "order": 506
+      }
+    ],
+    "authenticatedIntegrations": [
+      {
+        "id": "VRChat",
+        "displayName": "VRChat",
+        "basePath": "https://api.vrchat.cloud/api/1"
+      }
+    ],
+    "automationAssemblies": [
+      {
+        "id": "nodes",
+        "path": "Nyautomator.Automation.VRChat.dll"
+      }
+    ],
+    "runtimeParticipants": [
+      {
+        "id": "runtime",
+        "typeName": "Nyautomator.Modules.VRChat.VRChatRuntimeParticipant, Nyautomator.Module.VRChat"
+      }
+    ]
+  }
+}

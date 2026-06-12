@@ -1,0 +1,77 @@
+{
+  "$schema": "nyautomator.template.v1",
+  "id": "vrchat-avatar-and-osc-event-to-avatar-reaction",
+  "kind": "automation-workflow",
+  "title": "Event-to-avatar reaction",
+  "group": "VRChat Avatar And OSC",
+  "summary": "sub/cheer event -> VRChat OSC set parameter (toggle prop/emote) -> delay -> reset parameter.",
+  "description": "Event-to-avatar reaction: sub/cheer event -> VRChat OSC set parameter (toggle prop/emote) -> delay -> reset parameter.",
+  "rootOnly": true,
+  "generatedFrom": "docs/template-ideas.md",
+  "triggers": [
+    {
+      "id": "trigger-1",
+      "actionType": "Twitch.EventSub.channel.cheer.1",
+      "actionConfig": {},
+      "actionName": "Twitch Cheer"
+    }
+  ],
+  "messageTemplate": "{{UserName}} cheered {{Bits}} bits.",
+  "constants": [
+    {
+      "key": "mediaPath",
+      "name": "Alert Media Path",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "audioPath",
+      "name": "Alert Audio Path",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "durationSeconds",
+      "name": "Alert Duration Seconds",
+      "value": 6,
+      "type": "float64"
+    },
+    {
+      "key": "playTextToSpeech",
+      "name": "Play Text To Speech",
+      "value": false,
+      "type": "boolean"
+    },
+    {
+      "key": "oscParameter",
+      "name": "VRChat OSC Parameter",
+      "value": "GestureLeft",
+      "type": "string"
+    },
+    {
+      "key": "oscValue",
+      "name": "VRChat OSC Value",
+      "value": "true",
+      "type": "string"
+    },
+    {
+      "key": "vtubeHotkeyId",
+      "name": "VTube Studio Hotkey ID",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "variableName",
+      "name": "Global Variable Name",
+      "value": "event_to_avatar_reaction",
+      "type": "string"
+    }
+  ],
+  "steps": [
+    "alert",
+    "vrchat-parameter",
+    "vtube-hotkey",
+    "toggle-global-variable",
+    "log"
+  ]
+}

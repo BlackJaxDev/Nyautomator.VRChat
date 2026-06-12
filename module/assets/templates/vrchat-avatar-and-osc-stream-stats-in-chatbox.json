@@ -1,0 +1,56 @@
+{
+  "$schema": "nyautomator.template.v1",
+  "id": "vrchat-avatar-and-osc-stream-stats-in-chatbox",
+  "kind": "automation-workflow",
+  "title": "Stream stats in chatbox",
+  "group": "VRChat Avatar And OSC",
+  "summary": "timer interval -> format follower/viewer counters -> VRChat OSC chatbox message.",
+  "description": "Stream stats in chatbox: timer interval -> format follower/viewer counters -> VRChat OSC chatbox message.",
+  "rootOnly": true,
+  "generatedFrom": "docs/template-ideas.md",
+  "triggers": [
+    {
+      "id": "trigger-1",
+      "actionType": "Event.Timer.Interval",
+      "actionConfig": {
+        "IntervalMs": 600000,
+        "TimerId": "stream-stats-in-chatbox"
+      },
+      "actionName": "Stream stats in chatbox Timer"
+    }
+  ],
+  "messageTemplate": "{{TimerId}} tick {{TickCount}} at {{UtcTimestamp}}.",
+  "constants": [
+    {
+      "key": "filePath",
+      "name": "File Path",
+      "value": "logs/stream-stats-in-chatbox.log",
+      "type": "string"
+    },
+    {
+      "key": "oscParameter",
+      "name": "VRChat OSC Parameter",
+      "value": "GestureLeft",
+      "type": "string"
+    },
+    {
+      "key": "oscValue",
+      "name": "VRChat OSC Value",
+      "value": "true",
+      "type": "string"
+    },
+    {
+      "key": "variableName",
+      "name": "Global Variable Name",
+      "value": "stream_stats_in_chatbox",
+      "type": "string"
+    }
+  ],
+  "steps": [
+    "file-append",
+    "vrchat-parameter",
+    "vrchat-chatbox",
+    "set-global-variable",
+    "log"
+  ]
+}

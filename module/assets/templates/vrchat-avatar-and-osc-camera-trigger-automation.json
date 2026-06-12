@@ -1,0 +1,52 @@
+{
+  "$schema": "nyautomator.template.v1",
+  "id": "vrchat-avatar-and-osc-camera-trigger-automation",
+  "kind": "automation-workflow",
+  "title": "Camera trigger automation",
+  "group": "VRChat Avatar And OSC",
+  "summary": "VRChat.OSC.Camera.* change -> branch -> switch OBS scene or toggle source for photo mode.",
+  "description": "Camera trigger automation: VRChat.OSC.Camera.* change -> branch -> switch OBS scene or toggle source for photo mode.",
+  "rootOnly": true,
+  "generatedFrom": "docs/template-ideas.md",
+  "triggers": [
+    {
+      "id": "trigger-1",
+      "actionType": "VRChat.OSC.Camera.ActionTriggered",
+      "actionConfig": {},
+      "actionName": "VRChat Camera"
+    }
+  ],
+  "messageTemplate": "VRChat camera event: {{ActionName}}{{ModeName}}.",
+  "constants": [
+    {
+      "key": "sceneName",
+      "name": "OBS Scene Name",
+      "value": "Live",
+      "type": "string"
+    },
+    {
+      "key": "oscParameter",
+      "name": "VRChat OSC Parameter",
+      "value": "GestureLeft",
+      "type": "string"
+    },
+    {
+      "key": "oscValue",
+      "name": "VRChat OSC Value",
+      "value": "true",
+      "type": "string"
+    },
+    {
+      "key": "variableName",
+      "name": "Global Variable Name",
+      "value": "camera_trigger_automation",
+      "type": "string"
+    }
+  ],
+  "steps": [
+    "obs-scene",
+    "vrchat-parameter",
+    "toggle-global-variable",
+    "log"
+  ]
+}

@@ -1,0 +1,22 @@
+bin/
+obj/
+artifacts/
+build/
+intermediate/
+packages/
+.vs/
+.vscode/
+*.user
+*.suo
+TestResults/
+
+# Local secrets and machine-specific configuration
+.env
+.env.*
+*.pem
+*.key
+*.pfx
+*.p12
+secrets.json
+appsettings.Local.json
+appsettings.*.local.json

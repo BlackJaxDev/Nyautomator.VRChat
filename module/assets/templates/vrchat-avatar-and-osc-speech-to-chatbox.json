@@ -1,0 +1,55 @@
+{
+  "$schema": "nyautomator.template.v1",
+  "id": "vrchat-avatar-and-osc-speech-to-chatbox",
+  "kind": "automation-workflow",
+  "title": "Speech-to-chatbox",
+  "group": "VRChat Avatar And OSC",
+  "summary": "Audio.Speech.Recognized -> filter/length check -> VRChat OSC chatbox message of recognized phrase.",
+  "description": "Speech-to-chatbox: Audio.Speech.Recognized -> filter/length check -> VRChat OSC chatbox message of recognized phrase.",
+  "rootOnly": true,
+  "generatedFrom": "docs/template-ideas.md",
+  "triggers": [
+    {
+      "id": "trigger-1",
+      "actionType": "Audio.Speech.Recognized",
+      "actionConfig": {
+        "ContainsText": "",
+        "MinConfidence": 0.35
+      },
+      "actionName": "Speech Recognized"
+    }
+  ],
+  "messageTemplate": "Speech recognized: {{Text}}",
+  "constants": [
+    {
+      "key": "sourceName",
+      "name": "OBS Source Name",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "filterName",
+      "name": "OBS Filter Name",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "oscParameter",
+      "name": "VRChat OSC Parameter",
+      "value": "GestureLeft",
+      "type": "string"
+    },
+    {
+      "key": "oscValue",
+      "name": "VRChat OSC Value",
+      "value": "true",
+      "type": "string"
+    }
+  ],
+  "steps": [
+    "obs-enable-filter",
+    "vrchat-parameter",
+    "vrchat-chatbox",
+    "log"
+  ]
+}

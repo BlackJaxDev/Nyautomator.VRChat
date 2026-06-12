@@ -1,0 +1,747 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>VRChat OSC</title>
+  <style>
+    :root {
+      color-scheme: dark;
+      --surface: #11151d;
+      --surface-soft: #171d27;
+      --button-bg: #0d1118;
+      --border: #293241;
+      --border-strong: #37445a;
+      --text: #eef2f7;
+      --subtext: #aab3c2;
+      --accent: #6bbcff;
+      --accent-weak: #b7dbff;
+      --danger: #ff7777;
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      background: transparent;
+      color: var(--text);
+    }
+
+    * { box-sizing: border-box; }
+
+    html,
+    body {
+      margin: 0;
+      min-width: 0;
+      background: transparent;
+    }
+
+    body {
+      overflow: hidden;
+      font-size: 15px;
+    }
+
+    body,
+    button,
+    input,
+    select {
+      font: inherit;
+    }
+
+    .card {
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      background: color-mix(in srgb, var(--surface) 94%, rgba(148, 163, 184, 0.06));
+    }
+
+    .vrchat-param-container {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      min-height: 0;
+    }
+
+    .vrchat-param-header {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      padding: 12px;
+      box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.04);
+    }
+
+    .vrchat-param-meta {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    .vrchat-param-avatar {
+      display: flex;
+      align-items: baseline;
+      flex-wrap: wrap;
+      gap: 8px;
+      font-weight: 650;
+      color: var(--text);
+    }
+
+    .vrchat-param-avatar-label {
+      font-size: 0.75rem;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: var(--subtext);
+    }
+
+    .vrchat-param-avatar-id {
+      font-family: "JetBrains Mono", "Fira Code", "Cascadia Code", Consolas, monospace;
+      font-size: 0.78rem;
+      color: var(--subtext);
+      opacity: 0.85;
+      overflow-wrap: anywhere;
+    }
+
+    .vrchat-param-summary {
+      font-size: 0.82rem;
+      color: var(--subtext);
+    }
+
+    .vrchat-param-controls {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .input,
+    .select {
+      width: 100%;
+      min-width: 0;
+      border: 1px solid var(--border-strong);
+      border-radius: 9px;
+      background: var(--button-bg);
+      color: var(--text);
+      padding: 8px 10px;
+      outline: none;
+    }
+
+    .input:focus,
+    .select:focus {
+      border-color: var(--accent);
+      box-shadow: 0 0 0 3px rgba(107, 188, 255, 0.13);
+    }
+
+    .vrchat-param-search {
+      flex: 1 1 220px;
+      min-width: 180px;
+    }
+
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 36px;
+      border: 1px solid var(--border-strong);
+      border-radius: 9px;
+      background: var(--button-bg);
+      color: var(--text);
+      padding: 7px 12px;
+      font-weight: 700;
+      cursor: pointer;
+      white-space: nowrap;
+      transition: border-color 0.18s ease, background 0.18s ease, transform 0.05s ease;
+    }
+
+    .btn:hover:not(:disabled) {
+      border-color: var(--accent);
+      background: color-mix(in srgb, var(--button-bg) 82%, var(--accent) 18%);
+    }
+
+    .btn:active:not(:disabled) {
+      transform: translateY(1px);
+    }
+
+    .btn:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+
+    .vrchat-type-filters {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+
+    .vrchat-type-chip {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 4px 10px;
+      border-radius: 999px;
+      border: 1px solid var(--border);
+      background: rgba(148, 163, 184, 0.12);
+      font-size: 0.78rem;
+      font-weight: 700;
+      color: var(--subtext);
+      cursor: pointer;
+      user-select: none;
+      transition: border-color 0.2s ease, background-color 0.2s ease, color 0.2s ease;
+    }
+
+    .vrchat-type-chip input {
+      margin: 0;
+    }
+
+    .vrchat-type-chip.active {
+      border-color: var(--accent);
+      background: rgba(107, 188, 255, 0.18);
+      color: var(--text);
+    }
+
+    .vrchat-rule-panel {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      padding: 14px;
+    }
+
+    .vrchat-rule-panel[hidden] {
+      display: none;
+    }
+
+    .vrchat-rule-panel-header {
+      font-size: 0.78rem;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: var(--subtext);
+    }
+
+    .vrchat-rules {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .vrchat-rule-empty {
+      font-size: 0.84rem;
+      color: var(--subtext);
+      padding: 10px;
+      border-radius: 9px;
+      border: 1px dashed var(--border);
+      background: color-mix(in srgb, var(--surface) 92%, rgba(148, 163, 184, 0.06));
+    }
+
+    .vrchat-rule-row {
+      display: grid;
+      grid-template-columns: 120px 140px 1fr auto;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .vrchat-rule-remove {
+      padding: 6px 10px;
+    }
+
+    .vrchat-rule-add {
+      align-self: flex-start;
+    }
+
+    .vrchat-param-list-wrapper {
+      min-height: 380px;
+      max-height: calc(100vh - 210px);
+      overflow-y: auto;
+    }
+
+    .vrchat-param-list {
+      margin: 0;
+      padding: 0;
+      list-style: none;
+    }
+
+    .vrchat-param-item {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      padding: 7px 12px;
+      border-bottom: 1px solid var(--border);
+      font-size: 0.86rem;
+      transition: background-color 0.15s ease;
+    }
+
+    .vrchat-param-item:hover {
+      background: rgba(148, 163, 184, 0.08);
+    }
+
+    .vrchat-param-item:last-child {
+      border-bottom: 0;
+    }
+
+    .vrchat-param-name {
+      flex: 1;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .vrchat-param-type {
+      font-size: 0.72rem;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      padding: 2px 8px;
+      border-radius: 999px;
+      border: 1px solid color-mix(in srgb, var(--border), rgba(148, 163, 184, 0.18));
+      background: rgba(148, 163, 184, 0.12);
+      color: var(--subtext);
+    }
+
+    .vrchat-param-type--bool {
+      color: #facc15;
+      border-color: rgba(250, 204, 21, 0.55);
+      background: rgba(250, 204, 21, 0.12);
+    }
+
+    .vrchat-param-type--int {
+      color: #38bdf8;
+      border-color: rgba(56, 189, 248, 0.55);
+      background: rgba(56, 189, 248, 0.12);
+    }
+
+    .vrchat-param-type--float {
+      color: #c084fc;
+      border-color: rgba(192, 132, 252, 0.55);
+      background: rgba(192, 132, 252, 0.12);
+    }
+
+    .vrchat-param-empty {
+      padding: 28px 16px;
+      text-align: center;
+      font-size: 0.9rem;
+      color: var(--subtext);
+    }
+
+    .error {
+      color: #ffb4b4;
+    }
+
+    @media (max-width: 820px) {
+      .vrchat-rule-row {
+        grid-template-columns: 1fr;
+      }
+
+      .vrchat-rule-row .btn,
+      .vrchat-rule-add,
+      .vrchat-param-controls .btn {
+        width: 100%;
+      }
+    }
+  </style>
+</head>
+<body>
+  <main id="app" class="vrchat-param-container"></main>
+
+  <script>
+    const MATCH_OPTIONS = ['contains', 'startsWith', 'endsWith'];
+    const TYPE_FILTER_KEYS = ['bool', 'int', 'float'];
+    const DEFAULT_TYPE_FILTERS = { bool: true, int: true, float: true };
+
+    const state = {
+      vrchat: { configured: false, avatarId: '', avatarName: '', parameters: [] },
+      search: '',
+      rules: [],
+      rulePanelOpen: false,
+      typeFilters: { ...DEFAULT_TYPE_FILTERS },
+      configReady: false,
+      config: null,
+      saveTimer: 0,
+      sse: null
+    };
+
+    const app = document.getElementById('app');
+
+    function createRuleId() {
+      return `${Date.now()}-${Math.random().toString(16).slice(2)}`;
+    }
+
+    function escapeHtml(value) {
+      return String(value ?? '')
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#039;');
+    }
+
+    function captureFocus() {
+      const active = document.activeElement;
+      if (!active || active === document.body)
+        return null;
+
+      return {
+        id: active.id || '',
+        key: active.getAttribute('data-focus-key') || '',
+        start: active.selectionStart,
+        end: active.selectionEnd
+      };
+    }
+
+    function restoreFocus(focus) {
+      if (!focus)
+        return;
+
+      const selector = focus.id
+        ? `#${CSS.escape(focus.id)}`
+        : focus.key
+          ? `[data-focus-key="${CSS.escape(focus.key)}"]`
+          : '';
+      if (!selector)
+        return;
+
+      const node = app.querySelector(selector);
+      if (!node)
+        return;
+
+      node.focus();
+      if (typeof node.setSelectionRange === 'function'
+        && Number.isFinite(focus.start)
+        && Number.isFinite(focus.end)) {
+        try { node.setSelectionRange(focus.start, focus.end); } catch {}
+      }
+    }
+
+    function reportFrameHeight() {
+      if (window.parent === window) return;
+      window.requestAnimationFrame(() => {
+        const height = Math.max(
+          document.body.scrollHeight,
+          document.documentElement.scrollHeight,
+          document.body.offsetHeight,
+          document.documentElement.offsetHeight
+        );
+        window.parent.postMessage({
+          type: 'nyautomator:module-frame-height',
+          moduleId: 'vrchat',
+          assetPath: 'tabs/osc.html',
+          height
+        }, window.location.origin);
+      });
+    }
+
+    async function getJson(path, init) {
+      const res = await fetch(path, init);
+      const body = await res.json().catch(() => ({}));
+      if (!res.ok || body?.success === false)
+        throw new Error(body?.error || body?.message || `Request failed (${res.status}).`);
+      return body;
+    }
+
+    async function refreshVRChatParams() {
+      try {
+        state.vrchat = await getJson(`/modules/vrchat/api/osc/params?t=${Date.now()}`, { cache: 'no-store' });
+        render();
+      } catch (err) {
+        render(err?.message || 'Failed to load VRChat OSC parameters.');
+      }
+    }
+
+    async function loadConfig() {
+      try {
+        const cfg = await getJson('/modules/vrchat/config', { cache: 'no-store' });
+        const osc = cfg?.osc ? { ...cfg.osc } : {};
+        const rawRules = Array.isArray(osc.filterRules) ? osc.filterRules : [];
+        const legacyIgnore = Array.isArray(osc.ignore) ? osc.ignore : [];
+        let effectiveRules = rawRules;
+        let migratedFromIgnore = false;
+
+        if ((!effectiveRules || effectiveRules.length === 0) && legacyIgnore.length > 0) {
+          effectiveRules = legacyIgnore.map(value => ({ action: 'ignore', match: 'contains', value }));
+          migratedFromIgnore = true;
+        }
+
+        state.rules = (effectiveRules || []).map(rule => {
+          const action = rule?.action === 'include' ? 'include' : 'ignore';
+          const matchLookup = String(rule?.match ?? '').toLowerCase();
+          const match = MATCH_OPTIONS.find(option => option.toLowerCase() === matchLookup) || 'contains';
+          const value = String(rule?.value ?? '').trim();
+          return value ? { id: createRuleId(), action, match, value } : null;
+        }).filter(Boolean);
+
+        const normalizedTypes = { ...DEFAULT_TYPE_FILTERS };
+        if (osc.filterTypes && typeof osc.filterTypes === 'object') {
+          Object.entries(osc.filterTypes).forEach(([key, value]) => {
+            normalizedTypes[key] = Boolean(value);
+          });
+        }
+
+        state.typeFilters = normalizedTypes;
+        state.config = { ...cfg, osc };
+        state.configReady = true;
+
+        if (migratedFromIgnore)
+          persistFilterConfig(state.rules, state.typeFilters, { immediate: true });
+
+        render();
+      } catch {
+        state.configReady = false;
+        render();
+      }
+    }
+
+    function persistFilterConfig(nextRules = state.rules, nextTypes = state.typeFilters, options = {}) {
+      if (!state.config)
+        return;
+
+      const sanitizedRules = (nextRules || []).map(rule => {
+        const action = rule?.action === 'include' ? 'include' : 'ignore';
+        const matchLookup = String(rule?.match ?? '').toLowerCase();
+        const canonicalMatch = MATCH_OPTIONS.find(option => option.toLowerCase() === matchLookup) || 'contains';
+        const value = String(rule?.value ?? '').trim();
+        return value.length > 0 ? { action, match: canonicalMatch, value } : null;
+      }).filter(Boolean);
+
+      const sanitizedTypes = { ...DEFAULT_TYPE_FILTERS };
+      Object.entries(nextTypes || {}).forEach(([key, value]) => {
+        sanitizedTypes[key] = Boolean(value);
+      });
+
+      const currentOsc = state.config.osc ? { ...state.config.osc } : {};
+      state.config = {
+        ...state.config,
+        osc: {
+          ...currentOsc,
+          filterRules: sanitizedRules,
+          filterTypes: sanitizedTypes,
+          ignore: sanitizedRules
+            .filter(rule => rule.action === 'ignore' && rule.match === 'contains')
+            .map(rule => rule.value)
+        }
+      };
+
+      const save = () => {
+        fetch('/modules/vrchat/config', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(state.config)
+        }).catch(() => {});
+      };
+
+      if (options.immediate) {
+        save();
+        return;
+      }
+
+      window.clearTimeout(state.saveTimer);
+      state.saveTimer = window.setTimeout(save, 400);
+    }
+
+    function matchesRule(rule, target) {
+      const term = String(rule?.value ?? '').trim().toLowerCase();
+      if (!term) return false;
+      const mode = String(rule?.match ?? '').toLowerCase();
+      if (mode === 'startswith') return target.startsWith(term);
+      if (mode === 'endswith') return target.endsWith(term);
+      return target.includes(term);
+    }
+
+    function getFilteredParams() {
+      const q = state.search.toLowerCase().trim();
+      const includeRules = state.rules.filter(rule => rule.action === 'include' && String(rule.value ?? '').trim().length > 0);
+      const ignoreRules = state.rules.filter(rule => rule.action === 'ignore' && String(rule.value ?? '').trim().length > 0);
+      const hasTypeInfo = Object.keys(state.typeFilters || {}).length > 0;
+      const hasEnabledTypes = Object.values(state.typeFilters || {}).some(Boolean);
+
+      if (hasTypeInfo && !hasEnabledTypes)
+        return [];
+
+      return (state.vrchat.parameters || []).filter(param => {
+        const rawName = String(param?.name || '');
+        const name = rawName.toLowerCase();
+        const type = String(param?.type || '').toLowerCase();
+
+        if (Object.prototype.hasOwnProperty.call(state.typeFilters, type) && !state.typeFilters[type])
+          return false;
+        if (includeRules.length > 0 && !includeRules.some(rule => matchesRule(rule, name)))
+          return false;
+        if (ignoreRules.some(rule => matchesRule(rule, name)))
+          return false;
+        if (q && !name.includes(q))
+          return false;
+        return true;
+      });
+    }
+
+    function render(error = '') {
+      const focus = captureFocus();
+      const filtered = getFilteredParams();
+      const total = state.vrchat.parameters?.length || 0;
+      const hidden = Math.max(total - filtered.length, 0);
+
+      if (!state.vrchat.configured) {
+        app.innerHTML = `
+          <section class="card vrchat-param-header">
+            <div class="vrchat-param-avatar">
+              <span class="vrchat-param-avatar-label">VRChat OSC Parameters</span>
+            </div>
+            <div class="vrchat-param-summary ${error ? 'error' : ''}">
+              ${escapeHtml(error || 'No avatar parameters available yet. Switch avatars in VRChat to load parameters.')}
+            </div>
+            <div class="vrchat-param-controls">
+              <button type="button" class="btn" data-action="refresh">Refresh</button>
+            </div>
+          </section>`;
+        bindEvents();
+        reportFrameHeight();
+        return;
+      }
+
+      app.innerHTML = `
+        <section class="card vrchat-param-header">
+          <div class="vrchat-param-meta">
+            <div class="vrchat-param-avatar">
+              <span class="vrchat-param-avatar-label">Avatar:</span>
+              <span>${escapeHtml(state.vrchat.avatarName || '(unknown)')}</span>
+              <span class="vrchat-param-avatar-id">${escapeHtml(state.vrchat.avatarId || '')}</span>
+            </div>
+            <div class="vrchat-param-summary">
+              Showing ${filtered.length} of ${total} parameters${hidden > 0 ? ` | ${hidden} hidden` : ''}
+            </div>
+          </div>
+          <div class="vrchat-param-controls">
+            <input id="search" class="input vrchat-param-search" placeholder="Search parameters..." value="${escapeHtml(state.search)}">
+            <button type="button" class="btn" data-action="toggle-rules">${state.rulePanelOpen ? 'Hide filters' : 'Show filters'}</button>
+            <button type="button" class="btn" data-action="refresh">Refresh</button>
+          </div>
+          <div class="vrchat-type-filters">
+            ${TYPE_FILTER_KEYS.map(type => `
+              <label class="vrchat-type-chip ${state.typeFilters[type] ? 'active' : ''}">
+                <input type="checkbox" data-type-filter="${type}" ${state.typeFilters[type] ? 'checked' : ''}>
+                ${type.toUpperCase()}
+              </label>
+            `).join('')}
+          </div>
+        </section>
+
+        <section class="card vrchat-rule-panel" ${state.rulePanelOpen ? '' : 'hidden'}>
+          <div class="vrchat-rule-panel-header">Name filters</div>
+          <div class="vrchat-rules">
+            ${state.rules.length === 0 ? '<div class="vrchat-rule-empty">No custom rules yet. Add one to include or ignore parameters by name.</div>' : ''}
+            ${state.rules.map(rule => `
+              <div class="vrchat-rule-row" data-rule-id="${escapeHtml(rule.id)}">
+                <select class="select" data-rule-field="action" data-focus-key="${escapeHtml(rule.id)}:action">
+                  <option value="ignore" ${rule.action === 'ignore' ? 'selected' : ''}>Ignore</option>
+                  <option value="include" ${rule.action === 'include' ? 'selected' : ''}>Include</option>
+                </select>
+                <select class="select" data-rule-field="match" data-focus-key="${escapeHtml(rule.id)}:match">
+                  <option value="contains" ${rule.match === 'contains' ? 'selected' : ''}>Contains</option>
+                  <option value="startsWith" ${rule.match === 'startsWith' ? 'selected' : ''}>Starts with</option>
+                  <option value="endsWith" ${rule.match === 'endsWith' ? 'selected' : ''}>Ends with</option>
+                </select>
+                <input class="input" type="text" placeholder="Parameter name" value="${escapeHtml(rule.value)}" data-rule-field="value" data-focus-key="${escapeHtml(rule.id)}:value">
+                <button type="button" class="btn vrchat-rule-remove" data-action="remove-rule">Remove</button>
+              </div>
+            `).join('')}
+          </div>
+          <button type="button" class="btn vrchat-rule-add" data-action="add-rule">Add filter rule</button>
+        </section>
+
+        <section class="card vrchat-param-list-wrapper">
+          <ul class="vrchat-param-list">
+            ${filtered.length === 0
+              ? '<li class="vrchat-param-empty">No parameters match your filters</li>'
+              : filtered.map((param, index) => {
+                const type = String(param.type || '').toLowerCase();
+                return `
+                  <li class="vrchat-param-item" key="${index}">
+                    <span class="vrchat-param-name">${escapeHtml(param.name || '')}</span>
+                    <span class="vrchat-param-type vrchat-param-type--${escapeHtml(type)}">${escapeHtml(param.type || '')}</span>
+                  </li>`;
+              }).join('')}
+          </ul>
+        </section>`;
+      bindEvents();
+      restoreFocus(focus);
+      reportFrameHeight();
+    }
+
+    function bindEvents() {
+      app.querySelector('[data-action="refresh"]')?.addEventListener('click', refreshVRChatParams);
+      app.querySelector('[data-action="toggle-rules"]')?.addEventListener('click', () => {
+        state.rulePanelOpen = !state.rulePanelOpen;
+        render();
+      });
+      app.querySelector('[data-action="add-rule"]')?.addEventListener('click', () => {
+        state.rules.push({ id: createRuleId(), action: 'ignore', match: 'contains', value: '' });
+        persistFilterConfig();
+        render();
+      });
+      app.querySelector('#search')?.addEventListener('input', event => {
+        state.search = event.target.value;
+        render();
+      });
+      app.querySelectorAll('[data-type-filter]').forEach(input => {
+        input.addEventListener('change', event => {
+          const type = event.target.getAttribute('data-type-filter');
+          state.typeFilters[type] = !!event.target.checked;
+          persistFilterConfig();
+          render();
+        });
+      });
+      app.querySelectorAll('[data-rule-id]').forEach(row => {
+        const id = row.getAttribute('data-rule-id');
+        row.querySelector('[data-action="remove-rule"]')?.addEventListener('click', () => {
+          state.rules = state.rules.filter(rule => rule.id !== id);
+          persistFilterConfig();
+          render();
+        });
+        row.querySelectorAll('[data-rule-field]').forEach(input => {
+          input.addEventListener('input', event => {
+            const field = event.target.getAttribute('data-rule-field');
+            const rule = state.rules.find(item => item.id === id);
+            if (!rule) return;
+            rule[field] = event.target.value;
+            persistFilterConfig();
+            render();
+          });
+        });
+      });
+    }
+
+    function connectEvents() {
+      let stopped = false;
+      let retryMs = 1000;
+
+      const connect = () => {
+        if (stopped) return;
+        try { state.sse?.close?.(); } catch {}
+
+        const source = new EventSource(`/modules/vrchat/api/osc/events?t=${Date.now()}`, { withCredentials: false });
+        state.sse = source;
+
+        source.onmessage = event => {
+          try {
+            state.vrchat = JSON.parse(event.data);
+            render();
+            retryMs = 1000;
+          } catch {}
+        };
+
+        source.onerror = () => {
+          try { source.close(); } catch {}
+          if (stopped) return;
+          window.setTimeout(connect, retryMs);
+          retryMs = Math.min(retryMs * 2, 30000);
+        };
+      };
+
+      connect();
+      window.addEventListener('beforeunload', () => {
+        stopped = true;
+        try { state.sse?.close?.(); } catch {}
+      });
+    }
+
+    window.addEventListener('load', reportFrameHeight);
+    if ('ResizeObserver' in window)
+      new ResizeObserver(reportFrameHeight).observe(document.body);
+
+    render();
+    loadConfig();
+    refreshVRChatParams();
+    connectEvents();
+    window.setInterval(refreshVRChatParams, 5000);
+  </script>
+</body>
+</html>

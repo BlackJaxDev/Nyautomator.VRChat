@@ -1,0 +1,7 @@
+<Solution>
+  <Folder Name="/src/">
+    <Project Path="src/Nyautomator.Automation.VRChat/Nyautomator.Automation.VRChat.csproj" />
+    <Project Path="src/Nyautomator.Module.VRChat/Nyautomator.Module.VRChat.csproj" />
+    <Project Path="src/Nyautomator.VRChat/Nyautomator.VRChat.csproj" />
+  </Folder>
+</Solution>

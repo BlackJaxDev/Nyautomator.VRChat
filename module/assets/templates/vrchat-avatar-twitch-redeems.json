@@ -1,0 +1,653 @@
+{
+  "$schema": "nyautomator.template.v1",
+  "id": "vrchat-avatar-twitch-redeems",
+  "kind": "raw-automation-graph",
+  "title": "VRChat avatar Twitch redeems",
+  "group": "VRChat Avatar and OSC",
+  "summary": "Refresh VRChat avatars into a dashboard bitfield, sync Twitch channel point rewards, and change avatars on redemption.",
+  "description": "Creates a dashboard Refresh Avatars button, a VRChatAvatars bitfield variable, Twitch reward sync, and a redemption flow that switches to the selected VRChat avatar.",
+  "rootOnly": true,
+  "requiredTypeIds": [
+    "Manual.DashboardButton",
+    "Twitch.EventSub.channel.channel_points_custom_reward_redemption.add.1.ByReward",
+    "Flow.SubGraph",
+    "Flow.Sequence",
+    "Flow.IfElse",
+    "Value.GlobalVariable",
+    "VRChat.Api.GetAllAvatars",
+    "Value.List.ProjectObjects",
+    "Value.Bitfield.MergeItems",
+    "Action.UpsertGlobalVariable",
+    "Twitch.Reward.SyncFromCollection",
+    "Debug.Client.Popup",
+    "Value.Json.Path",
+    "Value.Bitfield.FindItem",
+    "VRChat.Api.SetSelectedAvatar",
+    "Twitch.Redemption.SetStatus"
+  ],
+  "positions": {
+    "a:enter": { "x": -900, "y": 0 },
+    "x:refresh_avatars": { "x": -120, "y": -360 },
+    "f:refresh_result": { "x": 220, "y": -210 },
+    "x:show_refresh_error": { "x": 560, "y": -40 },
+    "v:avatar_bitfield": { "x": -520, "y": 110 },
+    "v:project_avatars": { "x": 220, "y": -430 },
+    "v:merge_avatars": { "x": 560, "y": -330 },
+    "x:save_refreshed_bitfield": { "x": 900, "y": -330 },
+    "x:sync_rewards": { "x": 1240, "y": -250 },
+    "f:sync_result": { "x": 1580, "y": -250 },
+    "x:show_sync_error": { "x": 1920, "y": -80 },
+    "x:save_synced_bitfield": { "x": 1920, "y": -300 },
+    "f:redeem_sequence": { "x": -560, "y": 260 },
+    "v:event_reward_id": { "x": -220, "y": 260 },
+    "v:find_avatar": { "x": 180, "y": 230 },
+    "x:set_avatar": { "x": 560, "y": 230 },
+    "f:avatar_switch_result": { "x": 900, "y": 230 },
+    "x:fulfill_redemption": { "x": 1240, "y": 160 },
+    "x:cancel_redemption": { "x": 1240, "y": 330 },
+    "x:exit_done": { "x": 1240, "y": 240 }
+  },
+  "subGraph": {
+    "Id": "{{graphId}}",
+    "Name": "VRChat Avatar Twitch Redeems",
+    "DisplayName": "VRChat Avatar Twitch Redeems",
+    "Description": "Refreshes VRChat avatars into a bitfield, syncs Twitch rewards, and switches avatars from matching redemptions.",
+    "EnterNode": {
+      "Id": "enter",
+      "Name": "IN",
+      "Outputs": [
+        {
+          "Name": "Event",
+          "Handle": "event",
+          "Type": "object",
+          "Description": "Twitch custom reward redemption event."
+        }
+      ]
+    },
+    "ExitNode": {
+      "Id": "exit",
+      "Name": "OUT",
+      "Inputs": []
+    },
+    "FlowInputs": [
+      { "Handle": "refresh", "Label": "Refresh Avatars" },
+      { "Handle": "redeem", "Label": "Redeem Avatar" }
+    ],
+    "FlowOutputs": [
+      { "Handle": "done", "Label": "Done", "ReactionId": "exit_done" }
+    ],
+    "ValueInputs": [
+      {
+        "Name": "Event",
+        "Handle": "event",
+        "Type": "object",
+        "Description": "Twitch custom reward redemption event."
+      }
+    ],
+    "ValueOutputs": [],
+    "Actions": [],
+    "FlowNodes": [
+      {
+        "Id": "refresh_result",
+        "Name": "Refresh Result",
+        "Type": "Flow.IfElse",
+        "Config": {
+          "Condition": false
+        }
+      },
+      {
+        "Id": "sync_result",
+        "Name": "Reward Sync Result",
+        "Type": "Flow.IfElse",
+        "Config": {
+          "Condition": false
+        }
+      },
+      {
+        "Id": "redeem_sequence",
+        "Name": "Redeem Sequence",
+        "Type": "Flow.Sequence",
+        "Config": {
+          "FlowHandles": [
+            "set_avatar"
+          ]
+        }
+      },
+      {
+        "Id": "avatar_switch_result",
+        "Name": "Avatar Switch Result",
+        "Type": "Flow.IfElse",
+        "Config": {
+          "Condition": false
+        }
+      }
+    ],
+    "ValueNodes": [
+      {
+        "Id": "avatar_bitfield",
+        "Name": "VRChat Avatars Bitfield",
+        "Type": "Value.GlobalVariable",
+        "Config": {
+          "VariableName": "VRChatAvatars"
+        }
+      },
+      {
+        "Id": "project_avatars",
+        "Name": "Project Avatars",
+        "Type": "Value.List.ProjectObjects",
+        "Config": {
+          "KeyPath": "id",
+          "LabelPath": "name",
+          "EnabledPath": "",
+          "EnabledDefault": false,
+          "MetadataMappings": "avatarId=id\nthumbnailUrl=thumbnailImageUrl\nreleaseStatus=releaseStatus\nauthorName=authorName"
+        }
+      },
+      {
+        "Id": "merge_avatars",
+        "Name": "Merge Avatar Toggles",
+        "Type": "Value.Bitfield.MergeItems",
+        "Config": {
+          "MissingItemBehavior": "disable",
+          "EnabledDefault": false
+        }
+      },
+      {
+        "Id": "event_reward_id",
+        "Name": "Redemption Reward Id",
+        "Type": "Value.Json.Path",
+        "Config": {
+          "Path": "reward.id",
+          "DefaultValue": "",
+          "CaseInsensitive": true,
+          "ParseInputString": false
+        }
+      },
+      {
+        "Id": "find_avatar",
+        "Name": "Find Avatar By Reward Id",
+        "Type": "Value.Bitfield.FindItem",
+        "Config": {
+          "MetadataPath": "twitchRewardId",
+          "RequireEnabled": true
+        }
+      }
+    ],
+    "Reactions": [
+      {
+        "Id": "refresh_avatars",
+        "Name": "Get All VRChat Avatars",
+        "Type": "VRChat.Api.GetAllAvatars",
+        "Config": {
+          "MaxResults": 0,
+          "Offset": 0,
+          "Platform": "",
+          "IncludeUploaded": true,
+          "IncludeFavorited": true
+        }
+      },
+      {
+        "Id": "show_refresh_error",
+        "Name": "Show Refresh Error",
+        "Type": "Debug.Client.Popup",
+        "Config": {
+          "Message": "VRChat avatar refresh failed.",
+          "Level": "Error",
+          "Category": "VRChat.AvatarRedeems",
+          "DurationMs": 15000,
+          "AlsoClientConsole": true,
+          "AlsoWriteToLog": true
+        }
+      },
+      {
+        "Id": "save_refreshed_bitfield",
+        "Name": "Save Refreshed Avatar Bitfield",
+        "Type": "Action.UpsertGlobalVariable",
+        "Config": {
+          "VariableName": "VRChatAvatars",
+          "Type": "bitfield",
+          "PersistBetweenSessions": true,
+          "AllowAutomationChanges": true,
+          "ShowOnDashboard": true,
+          "GraphPath": ""
+        }
+      },
+      {
+        "Id": "sync_rewards",
+        "Name": "Sync Twitch Rewards",
+        "Type": "Twitch.Reward.SyncFromCollection",
+        "Config": {
+          "TitleTemplate": "Change into {{label}}",
+          "Cost": 1000,
+          "Prompt": "Redeem to switch my VRChat avatar.",
+          "CreateMissingRewards": true,
+          "UpdateExistingRewards": true,
+          "DisableUnselectedRewards": true,
+          "IsUserInputRequired": false,
+          "SkipRequestQueue": false,
+          "BackgroundColor": "#9146FF",
+          "GlobalCooldownSeconds": 0
+        }
+      },
+      {
+        "Id": "show_sync_error",
+        "Name": "Show Reward Sync Error",
+        "Type": "Debug.Client.Popup",
+        "Config": {
+          "Message": "Twitch reward sync failed.",
+          "Level": "Error",
+          "Category": "VRChat.AvatarRedeems",
+          "DurationMs": 15000,
+          "AlsoClientConsole": true,
+          "AlsoWriteToLog": true
+        }
+      },
+      {
+        "Id": "save_synced_bitfield",
+        "Name": "Save Reward Ids To Bitfield",
+        "Type": "Action.UpsertGlobalVariable",
+        "Config": {
+          "VariableName": "VRChatAvatars",
+          "Type": "bitfield",
+          "PersistBetweenSessions": true,
+          "AllowAutomationChanges": true,
+          "ShowOnDashboard": true,
+          "GraphPath": ""
+        }
+      },
+      {
+        "Id": "set_avatar",
+        "Name": "Set VRChat Avatar",
+        "Type": "VRChat.Api.SetSelectedAvatar",
+        "Config": {
+          "AvatarId": "",
+          "CooldownSeconds": 30
+        }
+      },
+      {
+        "Id": "fulfill_redemption",
+        "Name": "Fulfill Twitch Redemption",
+        "Type": "Twitch.Redemption.SetStatus",
+        "Config": {
+          "Status": "FULFILLED",
+          "RewardId": "",
+          "RedemptionId": "",
+          "EventRewardIdPath": "reward.id",
+          "EventRedemptionIdPath": "id"
+        }
+      },
+      {
+        "Id": "cancel_redemption",
+        "Name": "Cancel Twitch Redemption",
+        "Type": "Twitch.Redemption.SetStatus",
+        "Config": {
+          "Status": "CANCELED",
+          "RewardId": "",
+          "RedemptionId": "",
+          "EventRewardIdPath": "reward.id",
+          "EventRedemptionIdPath": "id"
+        }
+      }
+    ],
+    "FlowEdges": [
+      {
+        "Id": "flow_refresh_entry",
+        "Source": "a:enter",
+        "SourceHandle": "flow:refresh",
+        "Target": "x:refresh_avatars",
+        "TargetHandle": "flow:in",
+        "Interpolation": "bezier"
+      },
+      {
+        "Id": "flow_refresh_to_branch",
+        "Source": "x:refresh_avatars",
+        "SourceHandle": "flow:out",
+        "Target": "f:refresh_result",
+        "TargetHandle": "flow:in",
+        "Interpolation": "bezier"
+      },
+      {
+        "Id": "flow_refresh_success",
+        "Source": "f:refresh_result",
+        "SourceHandle": "flow:then",
+        "Target": "x:save_refreshed_bitfield",
+        "TargetHandle": "flow:in",
+        "Interpolation": "bezier"
+      },
+      {
+        "Id": "flow_refresh_failure",
+        "Source": "f:refresh_result",
+        "SourceHandle": "flow:else",
+        "Target": "x:show_refresh_error",
+        "TargetHandle": "flow:in",
+        "Interpolation": "bezier"
+      },
+      {
+        "Id": "flow_save_refreshed_to_sync",
+        "Source": "x:save_refreshed_bitfield",
+        "SourceHandle": "flow:out",
+        "Target": "x:sync_rewards",
+        "TargetHandle": "flow:in",
+        "Interpolation": "bezier"
+      },
+      {
+        "Id": "flow_sync_to_branch",
+        "Source": "x:sync_rewards",
+        "SourceHandle": "flow:out",
+        "Target": "f:sync_result",
+        "TargetHandle": "flow:in",
+        "Interpolation": "bezier"
+      },
+      {
+        "Id": "flow_sync_success",
+        "Source": "f:sync_result",
+        "SourceHandle": "flow:then",
+        "Target": "x:save_synced_bitfield",
+        "TargetHandle": "flow:in",
+        "Interpolation": "bezier"
+      },
+      {
+        "Id": "flow_sync_failure",
+        "Source": "f:sync_result",
+        "SourceHandle": "flow:else",
+        "Target": "x:show_sync_error",
+        "TargetHandle": "flow:in",
+        "Interpolation": "bezier"
+      },
+      {
+        "Id": "flow_save_synced_done",
+        "Source": "x:save_synced_bitfield",
+        "SourceHandle": "flow:out",
+        "Target": "x:exit_done",
+        "TargetHandle": "flow:in",
+        "Interpolation": "bezier"
+      },
+      {
+        "Id": "flow_refresh_error_done",
+        "Source": "x:show_refresh_error",
+        "SourceHandle": "flow:out",
+        "Target": "x:exit_done",
+        "TargetHandle": "flow:in",
+        "Interpolation": "bezier"
+      },
+      {
+        "Id": "flow_sync_error_done",
+        "Source": "x:show_sync_error",
+        "SourceHandle": "flow:out",
+        "Target": "x:exit_done",
+        "TargetHandle": "flow:in",
+        "Interpolation": "bezier"
+      },
+      {
+        "Id": "flow_redeem_entry",
+        "Source": "a:enter",
+        "SourceHandle": "flow:redeem",
+        "Target": "f:redeem_sequence",
+        "TargetHandle": "flow:in",
+        "Interpolation": "bezier"
+      },
+      {
+        "Id": "flow_set_avatar",
+        "Source": "f:redeem_sequence",
+        "SourceHandle": "flow:set_avatar",
+        "Target": "x:set_avatar",
+        "TargetHandle": "flow:in",
+        "Interpolation": "bezier"
+      },
+      {
+        "Id": "flow_set_avatar_to_branch",
+        "Source": "x:set_avatar",
+        "SourceHandle": "flow:out",
+        "Target": "f:avatar_switch_result",
+        "TargetHandle": "flow:in",
+        "Interpolation": "bezier"
+      },
+      {
+        "Id": "flow_avatar_success",
+        "Source": "f:avatar_switch_result",
+        "SourceHandle": "flow:then",
+        "Target": "x:fulfill_redemption",
+        "TargetHandle": "flow:in",
+        "Interpolation": "bezier"
+      },
+      {
+        "Id": "flow_avatar_failure",
+        "Source": "f:avatar_switch_result",
+        "SourceHandle": "flow:else",
+        "Target": "x:cancel_redemption",
+        "TargetHandle": "flow:in",
+        "Interpolation": "bezier"
+      },
+      {
+        "Id": "flow_fulfill_done",
+        "Source": "x:fulfill_redemption",
+        "SourceHandle": "flow:out",
+        "Target": "x:exit_done",
+        "TargetHandle": "flow:in",
+        "Interpolation": "bezier"
+      },
+      {
+        "Id": "flow_cancel_done",
+        "Source": "x:cancel_redemption",
+        "SourceHandle": "flow:out",
+        "Target": "x:exit_done",
+        "TargetHandle": "flow:in",
+        "Interpolation": "bezier"
+      }
+    ],
+    "ValueEdges": [
+      {
+        "Id": "value_refresh_to_project",
+        "Source": "x:refresh_avatars",
+        "SourceHandle": "valsrc:out",
+        "Target": "v:project_avatars",
+        "TargetHandle": "val:Source",
+        "Interpolation": "bezier"
+      },
+      {
+        "Id": "value_refresh_success_to_branch",
+        "Source": "x:refresh_avatars",
+        "SourceHandle": "valsrc:success",
+        "Target": "f:refresh_result",
+        "TargetHandle": "val:Condition",
+        "Interpolation": "bezier"
+      },
+      {
+        "Id": "value_refresh_error_to_popup",
+        "Source": "x:refresh_avatars",
+        "SourceHandle": "valsrc:error",
+        "Target": "x:show_refresh_error",
+        "TargetHandle": "val:Message",
+        "Interpolation": "bezier"
+      },
+      {
+        "Id": "value_existing_to_merge",
+        "Source": "v:avatar_bitfield",
+        "SourceHandle": "valsrc:out",
+        "Target": "v:merge_avatars",
+        "TargetHandle": "val:Existing",
+        "Interpolation": "bezier"
+      },
+      {
+        "Id": "value_project_to_merge",
+        "Source": "v:project_avatars",
+        "SourceHandle": "valsrc:out",
+        "Target": "v:merge_avatars",
+        "TargetHandle": "val:IncomingItems",
+        "Interpolation": "bezier"
+      },
+      {
+        "Id": "value_merge_to_save_refreshed",
+        "Source": "v:merge_avatars",
+        "SourceHandle": "valsrc:out",
+        "Target": "x:save_refreshed_bitfield",
+        "TargetHandle": "val:Value",
+        "Interpolation": "bezier"
+      },
+      {
+        "Id": "value_merge_to_sync",
+        "Source": "v:merge_avatars",
+        "SourceHandle": "valsrc:out",
+        "Target": "x:sync_rewards",
+        "TargetHandle": "val:Source",
+        "Interpolation": "bezier"
+      },
+      {
+        "Id": "value_sync_to_save_synced",
+        "Source": "x:sync_rewards",
+        "SourceHandle": "valsrc:out",
+        "Target": "x:save_synced_bitfield",
+        "TargetHandle": "val:Value",
+        "Interpolation": "bezier"
+      },
+      {
+        "Id": "value_sync_success_to_branch",
+        "Source": "x:sync_rewards",
+        "SourceHandle": "valsrc:success",
+        "Target": "f:sync_result",
+        "TargetHandle": "val:Condition",
+        "Interpolation": "bezier"
+      },
+      {
+        "Id": "value_sync_error_to_popup",
+        "Source": "x:sync_rewards",
+        "SourceHandle": "valsrc:error",
+        "Target": "x:show_sync_error",
+        "TargetHandle": "val:Message",
+        "Interpolation": "bezier"
+      },
+      {
+        "Id": "value_event_to_reward_id",
+        "Source": "a:enter",
+        "SourceHandle": "valsrc:event",
+        "Target": "v:event_reward_id",
+        "TargetHandle": "val:Input",
+        "Interpolation": "bezier"
+      },
+      {
+        "Id": "value_bitfield_to_find",
+        "Source": "v:avatar_bitfield",
+        "SourceHandle": "valsrc:out",
+        "Target": "v:find_avatar",
+        "TargetHandle": "val:Source",
+        "Interpolation": "bezier"
+      },
+      {
+        "Id": "value_reward_id_to_find",
+        "Source": "v:event_reward_id",
+        "SourceHandle": "valsrc:out",
+        "Target": "v:find_avatar",
+        "TargetHandle": "val:MetadataValue",
+        "Interpolation": "bezier"
+      },
+      {
+        "Id": "value_avatar_id_to_set",
+        "Source": "v:find_avatar",
+        "SourceHandle": "valsrc:key",
+        "Target": "x:set_avatar",
+        "TargetHandle": "val:AvatarId",
+        "Interpolation": "bezier"
+      },
+      {
+        "Id": "value_set_success_to_branch",
+        "Source": "x:set_avatar",
+        "SourceHandle": "valsrc:success",
+        "Target": "f:avatar_switch_result",
+        "TargetHandle": "val:Condition",
+        "Interpolation": "bezier"
+      },
+      {
+        "Id": "value_event_to_status",
+        "Source": "a:enter",
+        "SourceHandle": "valsrc:event",
+        "Target": "x:fulfill_redemption",
+        "TargetHandle": "val:Event",
+        "Interpolation": "bezier"
+      },
+      {
+        "Id": "value_event_to_cancel_status",
+        "Source": "a:enter",
+        "SourceHandle": "valsrc:event",
+        "Target": "x:cancel_redemption",
+        "TargetHandle": "val:Event",
+        "Interpolation": "bezier"
+      }
+    ]
+  },
+  "rootGraph": {
+    "actions": [
+      {
+        "id": "{{rootId}}_refresh_button",
+        "name": "Refresh Avatars",
+        "triggerType": "Manual.DashboardButton",
+        "config": {
+          "ButtonText": "Refresh Avatars"
+        }
+      },
+      {
+        "id": "{{rootId}}_avatar_redeem",
+        "name": "VRChat Avatar Redemption",
+        "triggerType": "Twitch.EventSub.channel.channel_points_custom_reward_redemption.add.1.ByReward",
+        "config": {
+          "Reward": ""
+        }
+      }
+    ],
+    "flowNodes": [
+      {
+        "id": "{{rootId}}_refresh_subgraph",
+        "name": "Refresh Avatar Redeems",
+        "type": "Flow.SubGraph",
+        "config": {
+          "GraphId": "{{graphId}}"
+        }
+      },
+      {
+        "id": "{{rootId}}_redeem_subgraph",
+        "name": "Redeem Avatar",
+        "type": "Flow.SubGraph",
+        "config": {
+          "GraphId": "{{graphId}}"
+        }
+      }
+    ],
+    "valueNodes": [],
+    "flowEdges": [
+      {
+        "id": "{{rootId}}_refresh_flow",
+        "source": "a:{{rootId}}_refresh_button",
+        "sourceHandle": "flow:out",
+        "target": "f:{{rootId}}_refresh_subgraph",
+        "targetHandle": "flow:refresh",
+        "kind": "flow",
+        "interpolation": "bezier"
+      },
+      {
+        "id": "{{rootId}}_redeem_flow",
+        "source": "a:{{rootId}}_avatar_redeem",
+        "sourceHandle": "flow:out",
+        "target": "f:{{rootId}}_redeem_subgraph",
+        "targetHandle": "flow:redeem",
+        "kind": "flow",
+        "interpolation": "bezier"
+      }
+    ],
+    "valueEdges": [
+      {
+        "id": "{{rootId}}_redeem_event",
+        "source": "a:{{rootId}}_avatar_redeem",
+        "sourceHandle": "valsrc:out",
+        "target": "f:{{rootId}}_redeem_subgraph",
+        "targetHandle": "val:event",
+        "kind": "value",
+        "interpolation": "bezier"
+      }
+    ],
+    "positions": {
+      "a:{{rootId}}_refresh_button": { "x": -760, "y": -160 },
+      "f:{{rootId}}_refresh_subgraph": { "x": 160, "y": -160 },
+      "a:{{rootId}}_avatar_redeem": { "x": -760, "y": 160 },
+      "f:{{rootId}}_redeem_subgraph": { "x": 160, "y": 160 }
+    }
+  }
+}
