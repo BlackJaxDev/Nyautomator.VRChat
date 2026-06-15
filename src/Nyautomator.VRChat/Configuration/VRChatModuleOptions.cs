@@ -24,7 +24,6 @@ public sealed class VRChatOscOptions
     public bool EnablePassthrough { get; set; }
     public int PassthroughInputPort { get; set; } = 9010;
     public int PassthroughOutputPort { get; set; } = 9011;
-    public List<string> Ignore { get; set; } = [];
     public List<VRChatOscFilterRule> FilterRules { get; set; } = [];
     public VRChatOscFilterTypeSelection FilterTypes { get; set; } = new();
 }

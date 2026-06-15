@@ -30,11 +30,9 @@ public sealed partial class VRChatAuthService
     {
         _requiresTwoFactor = false;
         _requiresEmailCode = false;
-        _requiresLoginPlaceVerification = false;
         _twoFactorMethods = [];
         SetMetadata(MetadataPendingTwoFactor, null);
         SetMetadata(MetadataRequiresEmail2Fa, null);
-        SetMetadata(MetadataRequiresLoginPlaceVerification, null);
         SetMetadata(MetadataTwoFactorMethods, null);
 
         await RefreshCurrentUserInternalAsync(cancellationToken, force: true).ConfigureAwait(false);
@@ -42,9 +40,7 @@ public sealed partial class VRChatAuthService
         if (!_requiresTwoFactor && HasAuthenticatedUser())
         {
             _completedTwoFactorMethods = [];
-            _requiresLoginPlaceVerification = false;
             SetMetadata(MetadataCompletedTwoFactorMethods, null);
-            SetMetadata(MetadataRequiresLoginPlaceVerification, null);
             _lastVerifiedUtc = DateTime.UtcNow;
             SetMetadata(MetadataLastVerifiedUtc, _lastVerifiedUtc?.ToString("o", CultureInfo.InvariantCulture));
         }
@@ -74,7 +70,6 @@ public sealed partial class VRChatAuthService
 
         var wasPendingVerification = _requiresTwoFactor
             || _requiresEmailCode
-            || _requiresLoginPlaceVerification
             || _completedTwoFactorMethods.Count > 0;
 
         UpdateCookies(response.Cookies);
@@ -205,12 +200,10 @@ public sealed partial class VRChatAuthService
     {
         _requiresTwoFactor = false;
         _requiresEmailCode = false;
-        _requiresLoginPlaceVerification = false;
         _twoFactorMethods = [];
         _completedTwoFactorMethods = [];
         SetMetadata(MetadataPendingTwoFactor, null);
         SetMetadata(MetadataRequiresEmail2Fa, null);
-        SetMetadata(MetadataRequiresLoginPlaceVerification, null);
         SetMetadata(MetadataTwoFactorMethods, null);
         SetMetadata(MetadataCompletedTwoFactorMethods, null);
         _lastVerifiedUtc = DateTime.UtcNow;
@@ -282,11 +275,11 @@ public sealed partial class VRChatAuthService
         _currentUser = null;
         _cachedUserId = null;
         _cachedDisplayName = null;
+        _cachedLogin = null;
         _cachedEmailHint = null;
         _cachedPendingEmailHint = null;
         _requiresTwoFactor = false;
         _requiresEmailCode = false;
-        _requiresLoginPlaceVerification = false;
         _twoFactorMethods = [];
         _completedTwoFactorMethods = [];
         _lastVerifiedUtc = null;
@@ -317,7 +310,6 @@ public sealed partial class VRChatAuthService
             IsConnected = !_requiresTwoFactor && !string.IsNullOrWhiteSpace(userId),
             RequiresTwoFactor = _requiresTwoFactor,
             RequiresEmailCode = _requiresEmailCode,
-            RequiresLoginPlaceVerification = _requiresLoginPlaceVerification,
             TwoFactorMethods = [.. _twoFactorMethods],
             CompletedTwoFactorMethods = [.. _completedTwoFactorMethods],
             DisplayName = displayName,

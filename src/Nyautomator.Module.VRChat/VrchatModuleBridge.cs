@@ -89,8 +89,6 @@ public sealed partial class VRChatModuleBridge(
                 "login" when IsPost(request) => await LoginAsync(request, cancellationToken).ConfigureAwait(false),
                 "verify-totp" when IsPost(request) => await VerifyTotpAsync(request, cancellationToken).ConfigureAwait(false),
                 "verify-email" when IsPost(request) => await VerifyEmailAsync(request, cancellationToken).ConfigureAwait(false),
-                "verify-login-place" when IsPost(request) => await VerifyLoginPlaceAsync(cancellationToken).ConfigureAwait(false),
-                "verify-login-place-token" when IsPost(request) => await VerifyLoginPlaceTokenAsync(request, cancellationToken).ConfigureAwait(false),
                 "import-session" when IsPost(request) => await ImportSessionAsync(request, cancellationToken).ConfigureAwait(false),
                 "resend-email" when IsPost(request) => await ResendEmailAsync(request, cancellationToken).ConfigureAwait(false),
                 "logout" when IsPost(request) => await LogoutAsync(cancellationToken).ConfigureAwait(false),

@@ -122,39 +122,6 @@ public sealed partial class VRChatModuleBridge
     }
 
     /// <summary>
-    /// Rechecks whether VRChat login-place verification has completed externally.
-    /// </summary>
-    /// <param name="cancellationToken">Token that cancels verification.</param>
-    /// <returns>A JSON response containing the VRChat operation result.</returns>
-    private async Task<ModuleApiResponse> VerifyLoginPlaceAsync(CancellationToken cancellationToken)
-    {
-        if (!await TryConfigureVRChatAsync(cancellationToken).ConfigureAwait(false))
-            return Error("VRChat configuration is not available.", 503);
-
-        var result = await _vrchat.Auth.RecheckLoginPlaceAsync(CreateRequestToken(cancellationToken)).ConfigureAwait(false);
-        return ModuleApiResponse.Json(ToResponse(result));
-    }
-
-    /// <summary>
-    /// Reads a login-place verification token or link and submits it to the VRChat auth service.
-    /// </summary>
-    /// <param name="request">Module API request whose body contains a verification token or link.</param>
-    /// <param name="cancellationToken">Token that cancels verification.</param>
-    /// <returns>A JSON response containing the VRChat operation result.</returns>
-    private async Task<ModuleApiResponse> VerifyLoginPlaceTokenAsync(ModuleApiRequest request, CancellationToken cancellationToken)
-    {
-        var body = await ReadJsonAsync<VRChatCodeRequest>(request, cancellationToken).ConfigureAwait(false);
-        if (body is null || string.IsNullOrWhiteSpace(body.Code))
-            return Error("VRChat login verification link or token is required.");
-
-        if (!await TryConfigureVRChatAsync(cancellationToken).ConfigureAwait(false))
-            return Error("VRChat configuration is not available.", 503);
-
-        var result = await _vrchat.Auth.VerifyLoginPlaceTokenAsync(body.Code, CreateRequestToken(cancellationToken)).ConfigureAwait(false);
-        return ModuleApiResponse.Json(ToResponse(result));
-    }
-
-    /// <summary>
     /// Imports VRChat session cookies into the auth service for reuse by authenticated requests.
     /// </summary>
     /// <param name="request">Module API request whose body contains auth and optional two-factor cookies.</param>
@@ -249,7 +216,6 @@ public sealed partial class VRChatModuleBridge
             IsConnected = status.IsConnected,
             RequiresTwoFactor = status.RequiresTwoFactor,
             RequiresEmailCode = status.RequiresEmailCode,
-            RequiresLoginPlaceVerification = status.RequiresLoginPlaceVerification,
             TwoFactorMethods = status.TwoFactorMethods is null ? [] : [.. status.TwoFactorMethods],
             CompletedTwoFactorMethods = status.CompletedTwoFactorMethods is null ? [] : [.. status.CompletedTwoFactorMethods],
             DisplayName = status.DisplayName,

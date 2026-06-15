@@ -455,35 +455,6 @@
       </details>
     </section>
 
-    <section class="flow-card" id="loginPlacePanel" hidden>
-      <div class="flow-header">
-        <h3>Approve New Login</h3>
-      </div>
-      <p class="flow-note" id="loginPlaceMessage">
-        Open the login approval email from VRChat, approve the login, then press Retry.
-      </p>
-      <div class="actions">
-        <button class="primary" id="verifyLoginPlace">Retry</button>
-      </div>
-      <details class="compact-details" style="margin-top: 12px;">
-        <summary>Email or link not working?</summary>
-        <div class="details-body">
-          <div class="form-grid">
-            <label for="loginPlaceResendPassword">Password</label>
-            <div class="inline-actions">
-              <input id="loginPlaceResendPassword" type="password" autocomplete="current-password">
-              <button id="resendLoginPlace">Resend Email</button>
-            </div>
-            <label for="loginPlaceToken">Link or Token</label>
-            <div class="inline-actions">
-              <input id="loginPlaceToken" autocomplete="off">
-              <button id="verifyLoginPlaceToken">Verify Link</button>
-            </div>
-          </div>
-        </div>
-      </details>
-    </section>
-
     <details class="compact-details" id="importPanel">
       <summary>Import Browser Session</summary>
       <div class="details-body">
@@ -590,21 +561,17 @@
       const allowsEmail = methods.includes('emailotp');
       const allowsTotp = methods.includes('totp');
       const completedTotp = completed.includes('totp') || completed.includes('otp');
-      const requiresLoginPlace = !!status.requiresLoginPlaceVerification || methods.includes('loginplace');
       const unknownMethod = !!status.requiresTwoFactor
         && !status.requiresEmailCode
-        && !requiresLoginPlace
         && methods.length === 0;
       const requiresEmail = !!status.requiresEmailCode
-        || requiresLoginPlace
         || allowsEmail
         || (unknownMethod && completedTotp);
       const requiresTotp = !!status.requiresTwoFactor
-        && !requiresLoginPlace
         && !completedTotp
         && (allowsTotp || unknownMethod || (!requiresEmail && !allowsEmail));
 
-      return { methods, completed, completedTotp, requiresLoginPlace, requiresEmail, requiresTotp };
+      return { methods, completed, completedTotp, requiresEmail, requiresTotp };
     }
 
     function updateStatusPill(label, tone = '') {
@@ -646,9 +613,6 @@
       if (status.isConnected) {
         updateStatusPill('Connected', 'success');
         show(`Connected as ${name || 'VRChat user'}.`, 'success');
-      } else if (flags.requiresLoginPlace) {
-        updateStatusPill('Approve login', 'warning');
-        show(status.lastError || fallbackMessage || 'Approve the VRChat login email, then retry.', 'warning');
       } else if (flags.requiresEmail) {
         updateStatusPill('Email code', 'warning');
         show(status.lastError || fallbackMessage || 'Enter the email verification code from VRChat.', 'warning');
@@ -666,20 +630,16 @@
         show(fallbackMessage || 'Sign in to enable authenticated VRChat API actions.');
       }
 
-      const loginVisible = !status.isConnected && !flags.requiresTotp && !flags.requiresEmail && !flags.requiresLoginPlace;
+      const loginVisible = !status.isConnected && !flags.requiresTotp && !flags.requiresEmail;
       setVisible('loginPanel', loginVisible);
       setVisible('totpPanel', !status.isConnected && flags.requiresTotp);
-      setVisible('emailPanel', !status.isConnected && flags.requiresEmail && !flags.requiresLoginPlace);
-      setVisible('loginPlacePanel', !status.isConnected && flags.requiresLoginPlace);
+      setVisible('emailPanel', !status.isConnected && flags.requiresEmail);
       setVisible('importPanel', !status.isConnected);
 
       const emailText = emailHint
         ? `Enter the email verification code sent to ${emailHint}.`
         : 'Enter the email verification code from VRChat.';
       el('emailHintMessage').textContent = emailText;
-      el('loginPlaceMessage').textContent = emailHint
-        ? `Open the login approval email sent to ${emailHint}, approve the login, then press Retry.`
-        : 'Open the login approval email from VRChat, approve the login, then press Retry.';
 
       updateControls();
       reportFrameHeight();
@@ -689,20 +649,17 @@
       const status = state.status || {};
       const hasSession = !!status.isConnected || !!status.hasStoredSession;
       const username = value('username') || status.accountLogin || '';
-      const resendPassword = value('resendPassword') || value('loginPlaceResendPassword') || value('password');
+      const resendPassword = value('resendPassword') || value('password');
 
       el('login').disabled = state.busy || !value('username') || !value('password');
       el('verifyTotp').disabled = state.busy || !value('totp');
       el('verifyEmail').disabled = state.busy || !value('email');
-      el('verifyLoginPlace').disabled = state.busy;
-      el('verifyLoginPlaceToken').disabled = state.busy || !value('loginPlaceToken');
       el('resend').disabled = state.busy || !username || !resendPassword;
-      el('resendLoginPlace').disabled = state.busy || !username || !resendPassword;
       el('importSession').disabled = state.busy || !value('authCookie');
       el('logout').disabled = state.busy || !hasSession;
 
       document.querySelectorAll('button').forEach(button => {
-        if (button.id && ['login','verifyTotp','verifyEmail','verifyLoginPlace','verifyLoginPlaceToken','resend','resendLoginPlace','importSession','logout'].includes(button.id))
+        if (button.id && ['login','verifyTotp','verifyEmail','resend','importSession','logout'].includes(button.id))
           return;
         button.disabled = state.busy;
       });
@@ -766,23 +723,9 @@
       setValue('email', '');
     }, 'Email verification failed'));
 
-    el('verifyLoginPlace').addEventListener('click', () => run(async () => {
-      renderStatus(await post('/modules/vrchat/api/verify-login-place'));
-    }, 'Login approval check failed'));
-
-    el('verifyLoginPlaceToken').addEventListener('click', () => run(async () => {
-      renderStatus(await post('/modules/vrchat/api/verify-login-place-token', { code: value('loginPlaceToken') }));
-      setValue('loginPlaceToken', '');
-    }, 'Login link verification failed'));
-
     el('resend').addEventListener('click', () => run(async () => {
       renderStatus(await post('/modules/vrchat/api/resend-email', resendBody('resendPassword')));
       setValue('resendPassword', '');
-    }, 'Resend failed'));
-
-    el('resendLoginPlace').addEventListener('click', () => run(async () => {
-      renderStatus(await post('/modules/vrchat/api/resend-email', resendBody('loginPlaceResendPassword')));
-      setValue('loginPlaceResendPassword', '');
     }, 'Resend failed'));
 
     el('importSession').addEventListener('click', () => run(async () => {
@@ -795,7 +738,7 @@
       renderStatus(await post('/modules/vrchat/api/logout'));
     }, 'Sign out failed'));
 
-    ['username','password','totp','email','resendPassword','loginPlaceResendPassword','loginPlaceToken','authCookie','twoFactorCookie'].forEach(id => {
+    ['username','password','totp','email','resendPassword','authCookie','twoFactorCookie'].forEach(id => {
       el(id)?.addEventListener('input', () => updateControls());
     });
     document.querySelectorAll('details').forEach(node => node.addEventListener('toggle', reportFrameHeight));

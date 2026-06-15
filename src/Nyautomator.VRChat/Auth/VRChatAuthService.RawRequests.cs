@@ -287,37 +287,6 @@ public sealed partial class VRChatAuthService
             request.Headers.TryAddWithoutValidation("Cookie", string.Join("; ", cookies));
     }
 
-
-    /// <summary>
-    /// Reads a query-string parameter value using URL decoding and case-insensitive key matching.
-    /// </summary>
-    /// <param name="query">Raw query string with or without a leading question mark.</param>
-    /// <param name="name">Parameter name to read.</param>
-    /// <returns>The decoded parameter value, empty string for valueless keys, or <see langword="null"/> when absent.</returns>
-    private static string? GetQueryParameter(string query, string name)
-    {
-        var normalized = query.Trim().TrimStart('?');
-        if (string.IsNullOrWhiteSpace(normalized))
-            return null;
-
-        foreach (var part in normalized.Split('&', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries))
-        {
-            var split = part.Split('=', 2);
-            if (split.Length == 0)
-                continue;
-
-            var key = Uri.UnescapeDataString(split[0].Replace("+", " "));
-            if (!string.Equals(key, name, StringComparison.OrdinalIgnoreCase))
-                continue;
-
-            return split.Length == 1
-                ? string.Empty
-                : Uri.UnescapeDataString(split[1].Replace("+", " "));
-        }
-
-        return null;
-    }
-
     /// <summary>
     /// Flattens response and content headers into CRLF-separated text.
     /// </summary>

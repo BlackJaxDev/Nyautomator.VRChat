@@ -92,11 +92,6 @@ public sealed partial class VRChatAuthService
     private const string MetadataCompletedTwoFactorMethods = "CompletedTwoFactorMethods";
 
     /// <summary>
-    /// Metadata key for legacy login-place verification state.
-    /// </summary>
-    private const string MetadataRequiresLoginPlaceVerification = "RequiresLoginPlaceVerification";
-
-    /// <summary>
     /// Maximum attempts used by retry helpers for rate-limited or transient VRChat API calls.
     /// </summary>
     private const int RateLimitMaxAttempts = 5;
@@ -243,11 +238,6 @@ public sealed partial class VRChatAuthService
     /// Tracks whether the pending verification step is an email one-time code.
     /// </summary>
     private bool _requiresEmailCode;
-
-    /// <summary>
-    /// Tracks legacy login-place verification state for restored sessions.
-    /// </summary>
-    private bool _requiresLoginPlaceVerification;
 
     /// <summary>
     /// Stores the last user-facing auth error.

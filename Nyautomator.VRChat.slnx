@@ -4,4 +4,7 @@
     <Project Path="src/Nyautomator.Module.VRChat/Nyautomator.Module.VRChat.csproj" />
     <Project Path="src/Nyautomator.VRChat/Nyautomator.VRChat.csproj" />
   </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests/Nyautomator.VRChat.Tests/Nyautomator.VRChat.Tests.csproj" />
+  </Folder>
 </Solution>

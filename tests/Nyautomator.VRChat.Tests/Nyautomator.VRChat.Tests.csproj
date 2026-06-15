@@ -1,0 +1,50 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <IsPackable>false</IsPackable>
+    <RootNamespace>Nyautomator.VRChat.Tests</RootNamespace>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.NET.Test.Sdk" Version="18.5.1" />
+    <PackageReference Include="xunit" Version="2.9.3" />
+    <PackageReference Include="xunit.runner.visualstudio" Version="4.0.0-pre.4">
+      <PrivateAssets>all</PrivateAssets>
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+    </PackageReference>
+    <PackageReference Include="coverlet.collector" Version="10.0.0">
+      <PrivateAssets>all</PrivateAssets>
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+    </PackageReference>
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\src\Nyautomator.Module.VRChat\Nyautomator.Module.VRChat.csproj" />
+    <ProjectReference Include="..\..\src\Nyautomator.VRChat\Nyautomator.VRChat.csproj" />
+  </ItemGroup>
+
+  <ItemGroup Condition="'$(UseNyautomatorProjectReferences)' == 'true'">
+    <ProjectReference Include="$(NyautomatorSourceRoot)src\Nyautomator.Core\Nyautomator.Core.csproj" />
+    <ProjectReference Include="$(NyautomatorSourceRoot)src\Nyautomator.Module.Abstractions\Nyautomator.Module.Abstractions.csproj" />
+    <ProjectReference Include="$(NyautomatorSourceRoot)src\Nyautomator.Runtime.Abstractions\Nyautomator.Runtime.Abstractions.csproj" />
+  </ItemGroup>
+
+  <ItemGroup Condition="'$(UseNyautomatorProjectReferences)' != 'true'">
+    <Reference Include="Nyautomator.Core">
+      <HintPath>$(NyautomatorReferencePath)Nyautomator.Core.dll</HintPath>
+      <Private>true</Private>
+    </Reference>
+    <Reference Include="Nyautomator.Module.Abstractions">
+      <HintPath>$(NyautomatorReferencePath)Nyautomator.Module.Abstractions.dll</HintPath>
+      <Private>true</Private>
+    </Reference>
+    <Reference Include="Nyautomator.Runtime.Abstractions">
+      <HintPath>$(NyautomatorReferencePath)Nyautomator.Runtime.Abstractions.dll</HintPath>
+      <Private>true</Private>
+    </Reference>
+  </ItemGroup>
+
+</Project>

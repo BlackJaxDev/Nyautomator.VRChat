@@ -55,11 +55,8 @@ public sealed partial class VRChatAuthService
             _lastVerifiedUtc = ParseUtc(GetMetadata(MetadataLastVerifiedUtc));
             _requiresTwoFactor = GetMetadataBool(MetadataPendingTwoFactor);
             _requiresEmailCode = GetMetadataBool(MetadataRequiresEmail2Fa);
-            _requiresLoginPlaceVerification = GetMetadataBool(MetadataRequiresLoginPlaceVerification);
             _twoFactorMethods = ParseTwoFactorMethods(GetMetadata(MetadataTwoFactorMethods));
             _completedTwoFactorMethods = ParseTwoFactorMethods(GetMetadata(MetadataCompletedTwoFactorMethods));
-            NormalizeLegacyLoginPlaceState();
-            NormalizeLegacyPendingVerificationState();
             ApplyCompletedTwoFactorFilter();
             _lastError = null;
 
@@ -97,9 +94,7 @@ public sealed partial class VRChatAuthService
 
             if (forceRefresh && status.RequiresTwoFactor)
             {
-                var factor = status.RequiresLoginPlaceVerification
-                    ? "new login location approval (check email link)"
-                    : status.RequiresEmailCode ? "email verification" : "two-factor code";
+                var factor = status.RequiresEmailCode ? "email verification" : "two-factor code";
                 EmitWarning("SessionAwaitingVerification", $"Stored VRChat session is awaiting {factor} for {DescribeIdentity(status)}.");
             }
 

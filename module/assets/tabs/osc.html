@@ -442,16 +442,8 @@
         const cfg = await getJson('/modules/vrchat/config', { cache: 'no-store' });
         const osc = cfg?.osc ? { ...cfg.osc } : {};
         const rawRules = Array.isArray(osc.filterRules) ? osc.filterRules : [];
-        const legacyIgnore = Array.isArray(osc.ignore) ? osc.ignore : [];
-        let effectiveRules = rawRules;
-        let migratedFromIgnore = false;
 
-        if ((!effectiveRules || effectiveRules.length === 0) && legacyIgnore.length > 0) {
-          effectiveRules = legacyIgnore.map(value => ({ action: 'ignore', match: 'contains', value }));
-          migratedFromIgnore = true;
-        }
-
-        state.rules = (effectiveRules || []).map(rule => {
+        state.rules = rawRules.map(rule => {
           const action = rule?.action === 'include' ? 'include' : 'ignore';
           const matchLookup = String(rule?.match ?? '').toLowerCase();
           const match = MATCH_OPTIONS.find(option => option.toLowerCase() === matchLookup) || 'contains';
@@ -469,9 +461,6 @@
         state.typeFilters = normalizedTypes;
         state.config = { ...cfg, osc };
         state.configReady = true;
-
-        if (migratedFromIgnore)
-          persistFilterConfig(state.rules, state.typeFilters, { immediate: true });
 
         render();
       } catch {
@@ -503,10 +492,7 @@
         osc: {
           ...currentOsc,
           filterRules: sanitizedRules,
-          filterTypes: sanitizedTypes,
-          ignore: sanitizedRules
-            .filter(rule => rule.action === 'ignore' && rule.match === 'contains')
-            .map(rule => rule.value)
+          filterTypes: sanitizedTypes
         }
       };
 

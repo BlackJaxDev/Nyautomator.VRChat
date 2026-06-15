@@ -205,11 +205,6 @@ public sealed partial class VRChatModuleBridge
         public bool RequiresEmailCode { get; init; }
 
         /// <summary>
-        /// Gets whether the current login flow is waiting for login-place verification.
-        /// </summary>
-        public bool RequiresLoginPlaceVerification { get; init; }
-
-        /// <summary>
         /// Gets the two-factor methods offered by VRChat for the current login flow.
         /// </summary>
         public string[] TwoFactorMethods { get; init; } = [];

@@ -42,11 +42,6 @@ public sealed class VRChatStatus
     public bool RequiresEmailCode { get; init; }
 
     /// <summary>
-    /// Gets whether a legacy login-place approval state is pending.
-    /// </summary>
-    public bool RequiresLoginPlaceVerification { get; init; }
-
-    /// <summary>
     /// Gets the pending two-factor method names reported by VRChat.
     /// </summary>
     public IReadOnlyList<string> TwoFactorMethods { get; init; } = [];

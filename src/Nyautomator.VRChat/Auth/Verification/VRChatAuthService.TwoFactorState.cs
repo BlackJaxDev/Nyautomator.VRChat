@@ -28,62 +28,12 @@ public sealed partial class VRChatAuthService
     private void ApplyTwoFactorState(ApiResponse<CurrentUser> response)
     {
         _twoFactorMethods = GetTwoFactorMethods(response);
-        _requiresLoginPlaceVerification = false;
         _requiresEmailCode = HasTwoFactorMethod(_twoFactorMethods, "emailOtp");
         _requiresTwoFactor = _twoFactorMethods.Count > 0
             || ResponseIndicatesTwoFactor(response)
             || _requiresEmailCode;
 
         ApplyCompletedTwoFactorFilter();
-    }
-
-    // Older builds modelled VRChat's new-login-location challenge as a click-the-link "login place"
-    // step. VRChat actually delivers it as an emailOtp code, so migrate any persisted login-place
-    // state to an email-code prompt on restore (matches VRCX and the official SDK).
-    /// <summary>
-    /// Migrates legacy login-place state to the current emailOtp verification model.
-    /// </summary>
-    private void NormalizeLegacyLoginPlaceState()
-    {
-        var hadLoginPlaceMethod = HasTwoFactorMethod(_twoFactorMethods, "loginPlace");
-        if (!_requiresLoginPlaceVerification && !hadLoginPlaceMethod)
-            return;
-
-        _requiresLoginPlaceVerification = false;
-        SetMetadata(MetadataRequiresLoginPlaceVerification, null);
-
-        if (hadLoginPlaceMethod)
-            _twoFactorMethods.RemoveAll(method => string.Equals(method, "loginPlace", StringComparison.OrdinalIgnoreCase));
-
-        _requiresTwoFactor = true;
-        _requiresEmailCode = true;
-        AddTwoFactorMethod(_twoFactorMethods, "emailOtp");
-    }
-
-    /// <summary>
-    /// Converts ambiguous restored pending-verification state into an emailOtp prompt when no user is authenticated.
-    /// </summary>
-    private void NormalizeLegacyPendingVerificationState()
-    {
-        if (!_requiresTwoFactor
-            || _requiresLoginPlaceVerification
-            || _twoFactorMethods.Count > 0
-            || _completedTwoFactorMethods.Count > 0
-            || !_lastVerifiedUtc.HasValue
-            || HasAuthenticatedUser())
-        {
-            return;
-        }
-
-        // The stored session was previously verified but no longer returns a user and VRChat did not
-        // report which factor it wants. The new-location follow-up is an emailOtp code, so prompt for
-        // that rather than a non-existent click-the-link step.
-        MarkTwoFactorMethodCompleted("totp", "otp");
-        _requiresLoginPlaceVerification = false;
-        _requiresEmailCode = true;
-        AddTwoFactorMethod(_twoFactorMethods, "emailOtp");
-        _lastVerifiedUtc = null;
-        SetMetadata(MetadataLastVerifiedUtc, null);
     }
 
     /// <summary>
@@ -101,12 +51,10 @@ public sealed partial class VRChatAuthService
             _twoFactorMethods = remaining;
         }
 
-        _requiresEmailCode = _requiresLoginPlaceVerification
-            || HasTwoFactorMethod(_twoFactorMethods, "emailOtp");
+        _requiresEmailCode = HasTwoFactorMethod(_twoFactorMethods, "emailOtp");
 
         if (_requiresTwoFactor
             && _twoFactorMethods.Count == 0
-            && !_requiresLoginPlaceVerification
             && (HasCompletedTwoFactorMethod("totp") || HasCompletedTwoFactorMethod("otp"))
             && !HasAuthenticatedUser())
         {
@@ -114,7 +62,7 @@ public sealed partial class VRChatAuthService
             return;
         }
 
-        if (!_requiresTwoFactor && (_requiresEmailCode || _requiresLoginPlaceVerification || _twoFactorMethods.Count > 0))
+        if (!_requiresTwoFactor && (_requiresEmailCode || _twoFactorMethods.Count > 0))
             _requiresTwoFactor = true;
 
         PersistVerificationMetadata();
@@ -130,9 +78,6 @@ public sealed partial class VRChatAuthService
         if (HasCompletedTwoFactorMethod("totp") || HasCompletedTwoFactorMethod("otp"))
         {
             // After the authenticator step VRChat can still require the new-login-location email code.
-            // Surface it as an emailOtp code entry (the user types the code from the email) rather than a
-            // click-the-link step, matching VRChat's real behaviour and how VRCX / the SDK handle it.
-            _requiresLoginPlaceVerification = false;
             _requiresEmailCode = true;
             _twoFactorMethods = [];
             AddTwoFactorMethod(_twoFactorMethods, "emailOtp");
@@ -150,7 +95,6 @@ public sealed partial class VRChatAuthService
         SetMetadata(MetadataPendingTwoFactor, _requiresTwoFactor ? "true" : null);
         SetMetadata(MetadataTwoFactorMethods, _twoFactorMethods.Count > 0 ? string.Join(",", _twoFactorMethods) : null);
         SetMetadata(MetadataCompletedTwoFactorMethods, _completedTwoFactorMethods.Count > 0 ? string.Join(",", _completedTwoFactorMethods) : null);
-        SetMetadata(MetadataRequiresLoginPlaceVerification, _requiresLoginPlaceVerification ? "true" : null);
     }
 
     /// <summary>
@@ -282,15 +226,6 @@ public sealed partial class VRChatAuthService
 
         return false;
     }
-
-    /// <summary>
-    /// Determines whether a response indicates VRChat is waiting for an email one-time code.
-    /// </summary>
-    /// <param name="response">VRChat current-user response.</param>
-    /// <returns><see langword="true"/> when emailOtp appears in typed or raw response data.</returns>
-    private static bool ResponseIndicatesEmail2Fa(ApiResponse<CurrentUser> response)
-        => CurrentUserHasTwoFactorMethod(response?.Data, "emailOtp")
-           || ContainsInsensitive(response?.RawContent, "emailOtp");
 
     /// <summary>
     /// Determines whether a response indicates any two-factor challenge.
