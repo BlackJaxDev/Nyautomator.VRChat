@@ -32,6 +32,10 @@
         "icon": "vrchat",
         "renderer": "status-card",
         "statusSource": "/modules/vrchat/api/status",
+        "metadata": {
+          "requiresAuth": true,
+          "authStatusFields": [ "isConnected", "connected" ]
+        },
         "actions": [
           { "id": "refresh", "label": "Refresh", "method": "GET", "path": "/modules/vrchat/api/status" },
           { "id": "forceRefresh", "label": "Force Refresh", "method": "GET", "path": "/modules/vrchat/api/status?refresh=true" }
